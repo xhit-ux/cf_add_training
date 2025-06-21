@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>自动化工具</title>
+</head>
+<body>
+  <h2>欢迎回来！现在可以执行自动化任务</h2>
+  <button id="check">验证会话有效性</button>
+  <pre id="output"></pre>
+
+  <script>
+    document.getElementById('check').addEventListener('click', async () => {
+      const res = await fetch('https://example.com/protected-endpoint', {
+        credentials: 'include' // 关键：发送 cookie
+      });
+      const text = await res.text();
+      document.getElementById('output').innerText = text;
+    });
+  </script>
+</body>
+</html>

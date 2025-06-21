@@ -1,0 +1,18 @@
+{
+  "name": "cf_add_training",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/xhit-ux/cf_add_training.git",
+  "author": "xhit-ux <3416470064@qq.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/remote": "^2.1.2",
+    "@types/node": "^24.0.3",
+    "electron": "^36.5.0",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "yarn build && electron dist/main.js"
+  }
+}
