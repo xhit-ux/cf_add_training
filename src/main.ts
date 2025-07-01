@@ -5,6 +5,7 @@ import { fetchGroups } from './fetchGroups';
 
 let win: BrowserWindow;
 
+let csrf_token = "";
 
 function extractGroupPage(rawHtml: string): string {
   let finalHtml = rawHtml.replace(
@@ -75,6 +76,19 @@ async function extractCookiesAsHeader(): Promise<string> {
 
   // 执行抓取 Group 页面的 HTML
   const rawhtml = await fetchGroups(cookieHeader);
+  
+  //提取csrf
+  const match = rawhtml.match(/<input\s+type=['"]hidden['"]\s+name=['"]csrf_token['"]\s+value=['"]([a-f0-9]{32})['"]\s*\/?>/i);
+  if (match) {
+    csrf_token = match[1];
+    console.log('[+] 提取到 csrf_token:', csrf_token);
+  } else {
+    console.warn('[-] 未能提取 csrf_token');
+    csrf_token = '';
+  }
+
+  //构造页面部分
+  
   const html = extractGroupPage(rawhtml);
   console.log(html);//修改后数据，控制台输出
   win.loadFile(path.join(__dirname, '../public/mygroup.html'));
