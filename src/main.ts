@@ -28,38 +28,38 @@ function extractGroupPage(rawHtml: string): string {
     `<th>Invited on</th>`
   );
   return finalHtml.replace(
-    /<tr>\s*<td>\s*<a[^>]*>(.*?)<\/a>\s*<\/td>\s*<td>\s*(.*?)\s*<\/td>\s*<td>\s*<span[^>]*>\s*(.*?)\s*<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>(.*?)<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>\s*<span[^>]*>(.*?)<\/span>\s*<\/span>\s*<\/td>\s*<td>\s*<span[^>]*>\s*([\s\S]*?)\s*<\/span>(?:[\s\S]*?)<\/td>\s*<\/tr>/g,
-    (_, groupName, role, invitation, since, invited) => {
+    /<tr>\s*<td>\s*<a\s+href="\/group\/([^"]+)"[^>]*>(.*?)<\/a>\s*<\/td>\s*<td>\s*(.*?)\s*<\/td>\s*<td>\s*<span[^>]*>\s*(.*?)\s*<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>(.*?)<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>\s*<span[^>]*>(.*?)<\/span>\s*<\/span>\s*<\/td>\s*<td>[\s\S]*?<\/td>\s*<\/tr>/g,
+    (_, groupId, groupName, role, invitation, since, invited) => {
       return `
-  <tr>
-    <td>
-      ${groupName}
-    </td>
+    <tr>
+      <td>
+        <a href="https://codeforces.com/group/${groupId}" class="groupName">${groupName}</a>
+      </td>
   
-    <td>
-      ${role}
-    </td>
+      <td>
+        ${role}
+      </td>
   
-    <td>
-      ${invitation}
-    </td>
+      <td>
+        ${invitation}
+      </td>
   
-    <td class="time-row">
-      <span class="format-time" data-locale="en">${since}</span>
-    </td>
+      <td class="time-row">
+        <span class="format-time" data-locale="en">${since}</span>
+      </td>
   
-    <td class="time-row">
-      <span title="Time when user was invited to group">
-        <span class="format-time" data-locale="en">${invited}</span>
-      </span>
-    </td>
+      <td class="time-row">
+        <span title="Time when user was invited to group">
+          <span class="format-time" data-locale="en">${invited}</span>
+        </span>
+      </td>
   
-    <td>
-      <input type="checkbox" name="group">
-    </td>
-  </tr>`;
+      <td>
+        <input type="checkbox" name="group" value="${groupId}">
+      </td>
+    </tr>`;
     }
-  );
+  );  
   
 }
 
@@ -76,7 +76,7 @@ async function extractCookiesAsHeader(): Promise<string> {
   // 执行抓取 Group 页面的 HTML
   const rawhtml = await fetchGroups(cookieHeader);
   const html = extractGroupPage(rawhtml);
-  console.log(html);
+  console.log(html);//修改后数据，控制台输出
   win.loadFile(path.join(__dirname, '../public/mygroup.html'));
 
   // 发送给前端页面（mygroup.html）

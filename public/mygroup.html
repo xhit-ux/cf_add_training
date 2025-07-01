@@ -4,6 +4,76 @@
 <head>
     <meta charset="UTF-8" />
     <title>我的 Codeforces Groups</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+            color: #333;
+        }
+    
+        h2 {
+            text-align: center;
+            color: #444;
+        }
+    
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+    
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    
+        tr:hover {
+            background-color: #e9ecef;
+        }
+    
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+    
+        a.groupName {
+            color: #007bff;
+            text-decoration: none;
+        }
+    
+        a.groupName:hover {
+            text-decoration: underline;
+        }
+        #confirmButton {
+          padding: 10px 20px;
+          font-size: 16px;
+          background-color: #28a745;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        #confirmButton:hover {
+          background-color: #218838;
+        }
+
+    </style>
+
 </head>
 
 <body>
@@ -15,6 +85,10 @@
             </tr>
         </tbody>
     </table>
+    <div style="text-align: center; margin-top: 20px;">
+        <button id="confirmButton">确认拉题</button>
+    </div>
+    
 
     <script>
         window.electronAPI.onGroupHtml((html) => {

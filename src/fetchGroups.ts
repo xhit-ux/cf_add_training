@@ -46,7 +46,7 @@ export async function fetchGroups(cookieHeader: string): Promise<string> {
         if (targetDiv) {
           const inner = targetDiv.innerHTML
           console.log('[+] 成功提取 group innerHTML')
-          console.log(targetDiv.innerHTML)
+          console.log(targetDiv.innerHTML) //原数据包数据，控制台输出
           resolve(inner) // 返回 innerHTML
         } else {
           console.error('[-] 未找到目标 tbody')
