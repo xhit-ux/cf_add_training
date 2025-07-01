@@ -8,7 +8,7 @@
     "secure": false,
     "httpOnly": true,
     "session": false,
-    "expirationDate": 1782901590.300787,
+    "expirationDate": 1782902484.454476,
     "sameSite": "lax"
   },
   {
@@ -48,20 +48,8 @@
     "sameSite": "unspecified"
   },
   {
-    "name": "cf_clearance",
-    "value": "0ga1p.NirIMuW7D5vRYZWy_NEV3rfCrHZcs3OOL2kD0-1751365363-1.2.1.1-PlmYrW9pu9ewji4Flzg.cxSsOT26odB.gV_PdwQqOWMol1dSsuZODSVZo3Eb_lXjfdA.ewjOK62K8FjDCtol8hUZWj6ctru21UXGGhfiTqQgMqSMkKN9wFlr2d7yMjew0yAQqkoVvbk1Z.DXU3phgkgXoDHXnUSe60Q_8U_9vdWDHA3J.AfCSd0WQ22IFbVxiNui5Bqe.OoZ4yK199v0ipCcrNjV_SWln5ccUiNKPWqmImXrqkhWtt11fhIca1YFm6Bx5kLcW.PPgG91zN1aNtDCryiTLMFfLobUyDQXyRoWRPg4GndRfITqwT48TjUzb44s3rFq61SctKOBM5CVpqVeTh68wbIEgID4_bolOP4",
-    "domain": ".codeforces.com",
-    "hostOnly": false,
-    "path": "/",
-    "secure": true,
-    "httpOnly": true,
-    "session": false,
-    "expirationDate": 1782901361.881938,
-    "sameSite": "no_restriction"
-  },
-  {
     "name": "JSESSIONID",
-    "value": "6F6B9DDFE72C491CD43A565E50FBA964",
+    "value": "BBA9088A9ED68B5CF35BA5B13CB6D1BA",
     "domain": "codeforces.com",
     "hostOnly": true,
     "path": "/",
@@ -71,27 +59,39 @@
     "sameSite": "lax"
   },
   {
+    "name": "cf_clearance",
+    "value": "KXmDdNpj0TEi.MOYv3f8coAePysK1Gpgfqkkq3WWBtY-1751366467-1.2.1.1-5wb.yOPYAdCej19NKN0E72ZS1ePFWonOvngW6lmbSTmDVgDAxT1ABX.48jZb5eWMEZGzMcw7KYl02YM2UZvz5.eOwFFzcQ1EaO_E5EpeR2PN83uiFSdPDWXgol3sD0mmmmmOMpHT1n1ssg1cyAibcYyaZkW7KsImT9sdaKu_zrYJcBu7AqVq7rif_Ml6KR8rkVHcnsOamXMWtQSYLZSZdkVoPjjEMoJqUFtkmTucNU3w4iUWJ8iBWymn7LnddOL_pot978aLekveQLVvgFq77B3lqRh4IZ8KHcbSEZwdsNt6DKbIDRWaUr1nTA1Yf_3B0_wzmZaBlNCOvboS51JbQhiBtxWWi6YUtBvfTfrxIDE",
+    "domain": ".codeforces.com",
+    "hostOnly": false,
+    "path": "/",
+    "secure": true,
+    "httpOnly": true,
+    "session": false,
+    "expirationDate": 1782902465.191356,
+    "sameSite": "no_restriction"
+  },
+  {
     "name": "39ce7",
-    "value": "CFEFXkFK",
+    "value": "CF9ERrZU",
     "domain": "codeforces.com",
     "hostOnly": true,
     "path": "/",
     "secure": false,
     "httpOnly": false,
     "session": false,
-    "expirationDate": 1752365578.769277,
+    "expirationDate": 1752366473.883377,
     "sameSite": "lax"
   },
   {
     "name": "pow",
-    "value": "9dfecad71a78f047e221e0346d14c1c302ba277d",
+    "value": "2b115d4fc35dc742502ec4c32c0e1f70ba8bfcca",
     "domain": "codeforces.com",
     "hostOnly": true,
     "path": "/",
     "secure": false,
     "httpOnly": false,
     "session": false,
-    "expirationDate": 1751451979.856548,
+    "expirationDate": 1751452875.121968,
     "sameSite": "lax"
   },
   {
@@ -136,7 +136,7 @@
     "secure": false,
     "httpOnly": false,
     "session": false,
-    "expirationDate": 1785925583.092726,
+    "expirationDate": 1785926478.374383,
     "sameSite": "unspecified"
   }
 ]

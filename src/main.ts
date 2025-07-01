@@ -7,9 +7,25 @@ let win: BrowserWindow;
 
 
 function extractGroupPage(rawHtml: string): string {
-  const finalHtml = rawHtml.replace(
+  let finalHtml = rawHtml.replace(
     /<th style="width: 2\.4em;"><\/th>/g,
-    `<th style="width: 2.4em;">请勾选拉题group</th>`
+    `<th>请勾选拉题group</th>`
+  );
+  finalHtml = finalHtml.replace(
+    /<th style="width: 7em;">Role<\/th>/g,
+    `<th>Role</th>`
+  );
+  finalHtml = finalHtml.replace(
+    /<th style="width: 10em;">Invitation<\/th>/g,
+    `<th>Invitation</th>`
+  );
+  finalHtml = finalHtml.replace(
+    /<th style="width: 14em;">Member since<\/th>/g,
+    `<th>Member since</th>`
+  );
+  finalHtml = finalHtml.replace(
+    /<th style="width: "width: 14em;">Invited on<\/th>/g,
+    `<th>Invited on</th>`
   );
   return finalHtml.replace(
     /<tr>\s*<td>\s*<a[^>]*>(.*?)<\/a>\s*<\/td>\s*<td>\s*(.*?)\s*<\/td>\s*<td>\s*<span[^>]*>\s*(.*?)\s*<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>(.*?)<\/span>\s*<\/td>\s*<td class="time-row">\s*<span[^>]*>\s*<span[^>]*>(.*?)<\/span>\s*<\/span>\s*<\/td>\s*<td>\s*<span[^>]*>\s*([\s\S]*?)\s*<\/span>(?:[\s\S]*?)<\/td>\s*<\/tr>/g,
@@ -39,7 +55,7 @@ function extractGroupPage(rawHtml: string): string {
     </td>
   
     <td>
-      <input type="radio">
+      <input type="checkbox" name="group">
     </td>
   </tr>`;
     }
@@ -60,6 +76,7 @@ async function extractCookiesAsHeader(): Promise<string> {
   // 执行抓取 Group 页面的 HTML
   const rawhtml = await fetchGroups(cookieHeader);
   const html = extractGroupPage(rawhtml);
+  console.log(html);
   win.loadFile(path.join(__dirname, '../public/mygroup.html'));
 
   // 发送给前端页面（mygroup.html）
