@@ -5,14 +5,20 @@
   "repository": "https://github.com/xhit-ux/cf_add_training.git",
   "author": "xhit-ux <3416470064@qq.com>",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "@electron/remote": "^2.1.2",
-    "@types/node": "^24.0.3",
-    "electron": "^36.5.0",
+    "@types/node": "^24.0.7",
+    "electron": "^37.1.0",
+    "jsdom": "^26.1.0",
+    "node-fetch": "^3.3.2",
+    "node-html-parser": "^7.0.1",
     "typescript": "^5.8.3"
   },
   "scripts": {
     "build": "tsc",
     "start": "yarn build && electron dist/main.js"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7"
   }
 }

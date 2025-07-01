@@ -1,20 +1,25 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8" />
   <title>登录目标网站</title>
 </head>
-<body>
-  <h2>请登录目标网站</h2>
-  <webview id="target" src="https://example.com" style="width:100%; height:80vh;" partition="persist:authsession"></webview>
-  <button id="save">保存 Cookie 并跳转</button>
 
+<body>
+  <h2>请登录 Codeforces</h2>
+  <webview id="target" src="https://codeforces.com/enter?back=%2F" style="width:100%; height:80vh;"
+    partition="persist:authsession"></webview>
+  <button id="save">保存 Cookie 并进入 Dashboard</button>
   <script>
     document.getElementById('save').addEventListener('click', async () => {
       const cookies = await window.electronAPI.saveCookies();
-      alert('Cookie 已保存，跳转中...');
-      window.location.href = "dashboard.html";
+      console.log('[login.html] Cookie:', cookies);
+      
+      // 跳转到 mygroup.html
+      window.location.href = "mygroup.html";
     });
   </script>
 </body>
+
 </html>

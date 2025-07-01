@@ -1,0 +1,181 @@
+<tr>
+    <th>Group name</th>
+    <th style="width: 7em;">Role</th>
+    <th style="width: 10em;">Invitation</th>
+    <th style="width: 14em;">Member since</th>
+    <th style="width: 14em;">Invited on</th>
+    <th style="width: 2.4em;"></th>
+</tr>
+<tr>
+    <td>
+        <a href="/group/VGiFYaYRCr" class="groupName">judgeing</a>
+    </td>
+
+    <td>
+        Manager
+    </td>
+
+    <td>
+        <span style="color: #0000bb;">
+            Accepted
+        </span>
+    </td>
+
+    <td class="time-row">
+        <span class="format-time" data-locale="en">Feb/23/2025 07:28</span>
+    </td>
+
+    <td class="time-row">
+        <span title="Time when user was invited to group">
+            <span class="format-time" data-locale="en">Feb/23/2025 07:28</span>
+        </span>
+    </td>
+
+    <td>
+
+        <span>
+            <img style="cursor: pointer" class="toggle-favourite add-favourite" title="Add to favourites"
+                alt="Add to favourites" data-type="GROUP" data-entityid="38906" data-size="16"
+                src="//codeforces.org/s/22034/images/icons/star_gray_16.png">
+        </span>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $("img.toggle-favourite").click(function () {
+                    var size = $(this).attr("data-size");
+                    var img = $(this);
+
+                    var isFavourite = !img.hasClass("remove-favourite");
+                    var type = img.attr("data-type");
+                    var entityId = img.attr("data-entityId");
+
+                    $.post("/data/favourite",
+                        { entityId: entityId, type: type, isFavourite: isFavourite },
+                        function (response) {
+                            if (response["success"] != "true") {
+                                alert(response["message"]);
+                            } else {
+                                if (img.hasClass("remove-favourite")) {
+                                    img.attr("src", "//codeforces.org/s/22034/images/icons/star_gray_" + size + ".png");
+                                    img.removeClass("remove-favourite");
+                                    img.addClass("add-favourite");
+                                } else {
+                                    img.attr("src", "//codeforces.org/s/22034/images/icons/star_yellow_" + size + ".png");
+                                    img.removeClass("add-favourite");
+                                    img.addClass("remove-favourite");
+                                }
+                            }
+                        }, "json"
+                    );
+
+                    return false;
+                });
+            });
+        </script>
+    </td>
+</tr>
+<tr>
+    <td>
+        <a href="/group/FkLQbuzLjH" class="groupName">Phoenix</a>
+    </td>
+
+    <td>
+        Manager
+    </td>
+
+    <td>
+        <span style="color: #0000bb;">
+            Accepted
+        </span>
+    </td>
+
+    <td class="time-row">
+        <span class="format-time" data-locale="en">Sep/26/2024 17:46</span>
+    </td>
+
+    <td class="time-row">
+        <span title="Time when user was invited to group">
+            <span class="format-time" data-locale="en">Apr/02/2024 13:17</span>
+        </span>
+    </td>
+
+    <td>
+
+        <span>
+            <img style="cursor: pointer" class="toggle-favourite add-favourite" title="Add to favourites"
+                alt="Add to favourites" data-type="GROUP" data-entityid="30200" data-size="16"
+                src="//codeforces.org/s/22034/images/icons/star_gray_16.png">
+        </span>
+
+    </td>
+</tr>
+<tr>
+    <td>
+        <a href="/group/6oXV9tQavc" class="groupName">Class 2,2023</a>
+    </td>
+
+    <td>
+        Manager
+    </td>
+
+    <td>
+        <span style="color: #0000bb;">
+            Accepted
+        </span>
+    </td>
+
+    <td class="time-row">
+        <span class="format-time" data-locale="en">Apr/11/2024 17:34</span>
+    </td>
+
+    <td class="time-row">
+        <span title="Time when user was invited to group">
+            <span class="format-time" data-locale="en">Apr/11/2024 17:34</span>
+        </span>
+    </td>
+
+    <td>
+
+        <span>
+            <img style="cursor: pointer" class="toggle-favourite add-favourite" title="Add to favourites"
+                alt="Add to favourites" data-type="GROUP" data-entityid="30436" data-size="16"
+                src="//codeforces.org/s/22034/images/icons/star_gray_16.png">
+        </span>
+
+    </td>
+</tr>
+<tr>
+    <td>
+        <a href="/group/MlnUj8Knxs" class="groupName">jgsu-acm</a>
+    </td>
+
+    <td>
+        Participant
+    </td>
+
+    <td>
+        <span style="color: #0000bb;">
+            Accepted
+        </span>
+    </td>
+
+    <td class="time-row">
+        <span class="format-time" data-locale="en">Oct/19/2023 14:08</span>
+    </td>
+
+    <td class="time-row">
+        <span title="Time when user was invited to group">
+            <span class="format-time" data-locale="en">Oct/19/2023 13:53</span>
+        </span>
+    </td>
+
+    <td>
+
+        <span>
+            <img style="cursor: pointer" class="toggle-favourite add-favourite" title="Add to favourites"
+                alt="Add to favourites" data-type="GROUP" data-entityid="16312" data-size="16"
+                src="//codeforces.org/s/22034/images/icons/star_gray_16.png">
+        </span>
+
+    </td>
+</tr>
