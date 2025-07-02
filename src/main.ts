@@ -6,6 +6,7 @@ import { fetchGroups, extractGroup } from './fetchGroups';
 let win: BrowserWindow;
 
 let csrf_token = "";
+let cookie_all = "";
 
 function extractGroupPage(rawHtml: string): string {
   let finalHtml = rawHtml.replace(
@@ -71,6 +72,7 @@ async function extractCookiesAsHeader(): Promise<string> {
   fs.writeFileSync('cookies/cookies.json', JSON.stringify(cookies, null, 2));
 
   const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
+  cookie_all = cookieHeader;
   // console.log('\n[+] 构造出的 Cookie 请求头格式:');
   // console.log(cookieHeader);
 
@@ -104,7 +106,7 @@ async function extractCookiesAsHeader(): Promise<string> {
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
-    height: 800,
+    height: 900,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -120,6 +122,11 @@ ipcMain.handle('save-cookies', async () => {
   const cookieHeader = await extractCookiesAsHeader();
   return { status: 'done' };
 });
+
+ipcMain.handle('pull-problems', async () => {
+  
+})
+
 
 app.whenReady().then(() => {
   createWindow();

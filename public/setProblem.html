@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>题目设置</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            padding: 30px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            color: #444;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #selectedGroups {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            justify-content: center;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>设置拉题参数</h2>
+
+    <label for="contestName">名称：</label>
+    <input type="text" id="contestName" placeholder="例如：Training #1">
+
+    <label for="contestDuration">时长（分钟）：</label>
+    <input type="number" id="contestDuration" value="120">
+
+    <label>题目信息（暂仅支持一个）</label>
+    <input type="text" id="problemId" placeholder="题目 ID，例如：3442674">
+    <input type="text" id="problemIndex" placeholder="题号索引，例如：A">
+
+    <label>选中的 Group ID：</label>
+    <div id="selectedGroups">(加载中...)</div>
+
+    <div style="text-align: center;">
+        <button id="submitButton">确认拉题（未实现）</button>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const groups = localStorage.getItem('selectedGroups')
+            document.getElementById('selectedGroups').textContent = groups ? groups : '无选中项';
+        });
+    </script>
+</body>
+
+</html>

@@ -86,7 +86,7 @@
         </tbody>
     </table>
     <div style="text-align: center; margin-top: 20px;">
-        <button id="confirmButton">确认拉题</button>
+        <button id="confirmButton">勾选完成，点击进行题目设置</button>
     </div>
     
 
@@ -94,6 +94,20 @@
         window.electronAPI.onGroupHtml((html) => {
             document.getElementById('groupBody').innerHTML = html
         })
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('input[name="group"]:checked');
+            const selected = Array.from(checkboxes).map(cb => cb.value);
+            if (selected.length != 1) {
+                alert('暂不支持多 Group 批量拉题！');
+                return;
+            }
+
+            // 保存选中 group 到 localStorage
+            localStorage.setItem('selectedGroups', selected.join(', '));
+
+            // 跳转到题目设置页面
+            location.href = 'setProblem.html';
+        });
     </script>
 </body>
 
