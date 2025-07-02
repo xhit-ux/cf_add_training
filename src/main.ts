@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, session } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { fetchGroups } from './fetchGroups';
+import { fetchGroups, extractGroup } from './fetchGroups';
 
 let win: BrowserWindow;
 
@@ -71,8 +71,8 @@ async function extractCookiesAsHeader(): Promise<string> {
   fs.writeFileSync('cookies/cookies.json', JSON.stringify(cookies, null, 2));
 
   const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
-  console.log('\n[+] 构造出的 Cookie 请求头格式:');
-  console.log(cookieHeader);
+  // console.log('\n[+] 构造出的 Cookie 请求头格式:');
+  // console.log(cookieHeader);
 
   // 执行抓取 Group 页面的 HTML
   const rawhtml = await fetchGroups(cookieHeader);
@@ -89,8 +89,8 @@ async function extractCookiesAsHeader(): Promise<string> {
 
   //构造页面部分
   
-  const html = extractGroupPage(rawhtml);
-  console.log(html);//修改后数据，控制台输出
+  const html = extractGroupPage(extractGroup(rawhtml));
+  // console.log(html);//修改后数据，控制台输出
   win.loadFile(path.join(__dirname, '../public/mygroup.html'));
 
   // 发送给前端页面（mygroup.html）

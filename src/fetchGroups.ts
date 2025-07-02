@@ -2,6 +2,23 @@ import https from 'https'
 import { JSDOM } from 'jsdom'
 import zlib from 'zlib'
 
+export function extractGroup(html: string): string {
+  const dom = new JSDOM(html)
+  const document = dom.window.document
+  const pageContent = document.querySelector('#pageContent')
+  const tbodys = pageContent?.querySelectorAll('tbody')
+  const targetDiv = tbodys?.[0]
+  if (targetDiv) {
+    const inner = targetDiv.innerHTML
+    console.log('[+] 成功提取 group innerHTML')
+    // console.log(targetDiv.innerHTML) //原数据包数据，控制台输出
+    return(inner) // 返回 innerHTML
+  } else {
+    console.error('[-] 未找到目标 tbody')
+    return('未能获取到 Group 信息')
+  }
+}
+
 export async function fetchGroups(cookieHeader: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const options = {
@@ -36,22 +53,8 @@ export async function fetchGroups(cookieHeader: string): Promise<string> {
         } else {
           html = buffer.toString()
         }
-  
-        const dom = new JSDOM(html)
-        const document = dom.window.document
-        const pageContent = document.querySelector('#pageContent')
-        const tbodys = pageContent?.querySelectorAll('tbody')
-        const targetDiv = tbodys?.[0]
-  
-        if (targetDiv) {
-          const inner = targetDiv.innerHTML
-          console.log('[+] 成功提取 group innerHTML')
-          console.log(targetDiv.innerHTML) //原数据包数据，控制台输出
-          resolve(inner) // 返回 innerHTML
-        } else {
-          console.error('[-] 未找到目标 tbody')
-          resolve('<p>未能获取到 Group 信息</p>')
-        }
+        // console.log(html);
+        resolve(html);
       })
     })
 
