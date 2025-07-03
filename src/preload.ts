@@ -1,6 +1,16 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   saveCookies: () => ipcRenderer.invoke('save-cookies'),
-  onGroupHtml: (callback: (html: string) => void) => ipcRenderer.on('group-html', (_, html) => callback(html))
-})
+
+  onGroupHtml: (callback: (html: string) => void) =>
+    ipcRenderer.on('group-html', (_, html) => callback(html)),
+
+  catProblemWithRange: (
+    name: string,
+    duration: number,
+    ranges: [number, number][],
+    count: number
+  ) => ipcRenderer.send("cat-problem-range", name, duration, ranges, count)
+});
+

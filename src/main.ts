@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, session } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fetchGroups, extractGroup } from './fetchGroups';
+import { publicProblem } from './publicProblem';
 
 let win: BrowserWindow;
 
@@ -119,13 +120,13 @@ function createWindow() {
 }
 
 ipcMain.handle('save-cookies', async () => {
-  const cookieHeader = await extractCookiesAsHeader();
+  await extractCookiesAsHeader();
   return { status: 'done' };
 });
 
-ipcMain.handle('pull-problems', async () => {
-  
-})
+ipcMain.on('cat-problem-range', async (event, contestName, contestDuration, tagsRange, count) => {
+  await publicProblem(cookie_all, csrf_token, contestName, contestDuration, tagsRange, count);
+});
 
 
 app.whenReady().then(() => {

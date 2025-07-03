@@ -14,7 +14,6 @@
 
         h2 {
             text-align: center;
-            color: #444;
         }
 
         label {
@@ -39,7 +38,7 @@
         }
 
         button {
-            margin-top: 25px;
+            margin-top: 20px;
             padding: 10px 20px;
             font-size: 16px;
             background-color: #007bff;
@@ -47,11 +46,107 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            justify-content: center;
         }
 
         button:hover {
             background-color: #0056b3;
+        }
+
+        /* 弹窗样式 */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 20%;
+            max-height: 80vh;
+            overflow-y: auto;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            background-color: #fff;
+            padding: 40px;
+            border: 1px solid #aaa;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            width: 600px;
+        }
+
+        #popup table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        #popup th {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            border-bottom: 2px solid #0056b3;
+        }
+
+        #popup td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #popup tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #popup input[type="number"] {
+            width: 90px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+        .modal {
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal-content {
+          background: #fff;
+          padding: 20px 30px;
+          border-radius: 8px;
+          width: 400px;
+          position: relative;
+        }
+
+        .close {
+          position: absolute;
+          right: 10px;
+          top: 10px;
+          font-size: 22px;
+          cursor: pointer;
+          color: #888;
+        }
+
+        .close:hover {
+          color: #000;
+        }
+
+        .modal-content input {
+          margin: 0 5px;
+          padding: 5px;
+          font-size: 14px;
         }
     </style>
 </head>
@@ -65,21 +160,96 @@
     <label for="contestDuration">时长（分钟）：</label>
     <input type="number" id="contestDuration" value="120">
 
-    <label>题目信息（暂仅支持一个）</label>
-    <input type="text" id="problemId" placeholder="题目 ID，例如：3442674">
-    <input type="text" id="problemIndex" placeholder="题号索引，例如：A">
+    <label for="numQuestions">输入题目个数（最多99）：</label>
+    <input type="number" id="numQuestions" min="1" max="99" />
+
+    <button id="openPopup">设置各题难度范围</button>
 
     <label>选中的 Group ID：</label>
     <div id="selectedGroups">(加载中...)</div>
 
-    <div style="text-align: center;">
-        <button id="submitButton">确认拉题（未实现）</button>
+    <div id="overlay"></div>
+    <div id="popup">
+        <span id="closePopup" class="close">&times;</span>
+        <table id="rangeTable" style="text-align: center;">
+            <!-- JS 中填充 -->
+        </table>
+        <div style="text-align: center;">
+            <button id="confirmRanges">确认拉取</button>
+        </div>
+        
     </div>
 
     <script>
+        const overlay = document.getElementById("overlay");
+        const popup = document.getElementById("popup");
+        const table = document.getElementById("rangeTable");
+        document.getElementById("closePopup").addEventListener("click", () => {
+                overlay.style.display = "none";
+                popup.style.display = "none";
+            });
+
         window.addEventListener('DOMContentLoaded', () => {
-            const groups = localStorage.getItem('selectedGroups')
+            const groups = localStorage.getItem('selectedGroups');
             document.getElementById('selectedGroups').textContent = groups ? groups : '无选中项';
+        });
+
+        document.getElementById("openPopup").addEventListener("click", () => {
+            const n = parseInt(document.getElementById("numQuestions").value);
+            if (isNaN(n) || n <= 0 || n > 99) {
+                alert("请输入 1 ~ 99 之间的整数");
+                return;
+            }
+
+            table.innerHTML = "<tr><th>题目</th><th>800<=low</th><th>low<=high<=3500</th></tr>";
+            for (let i = 0; i < n; i++) {
+                table.innerHTML += `
+          <tr>
+            <td>第 ${i + 1} 题</td>
+            <td><input type="number" min="800" max="3500" /></td>
+            <td><input type="number" min="800" max="3500" /></td>
+          </tr>`;
+            }
+
+            overlay.style.display = "block";
+            popup.style.display = "block";
+        });
+
+        document.getElementById("confirmRanges").addEventListener("click", async () => {
+            const contestName = document.getElementById("contestName").value.trim();
+            const contestDuration = parseInt(document.getElementById("contestDuration").value);
+            const rows = [...table.querySelectorAll("tr")].slice(1); // skip header
+            const ranges = [];
+
+            for (const row of rows) {
+                const inputs = row.querySelectorAll("input");
+                const low = parseInt(inputs[0].value);
+                const high = parseInt(inputs[1].value);
+
+                if (
+                    isNaN(low) || isNaN(high) ||
+                    low < 800 || high > 3500 || low > high
+                ) {
+                    alert("每一题的范围必须在 800~3500 且 low <= high");
+                    return;
+                }
+
+                ranges.push([low, high]);
+            }
+
+            overlay.style.display = "none";
+            popup.style.display = "none";
+
+            const count = ranges.length;
+
+            console.log("拉题参数：", {
+                contestName,
+                contestDuration,
+                count,
+                ranges
+            });
+
+            await window.electronAPI.catProblemWithRange(contestName, contestDuration, ranges, count);
         });
     </script>
 </body>
