@@ -55,11 +55,92 @@
    - 标签难度范围（支持多区间）；
 3. 页面发送 `ipcRenderer` 消息至主进程，调用 `publicProblem()`。
 
-### （3）拉取题目与发布
+### （3）拉取题目与发布 //当前存在问题
 
 ```ts
 // publicProblem.ts
-publicProblem(cookie, csrf, name, duration, tagsRange, count)
+export async function publicProblem(
+  cookieHeader: string,
+  csrfToken: string,
+  contestName: string,
+  contestDuration: number,
+  tagsRange: [number, number][],
+  count: number
+): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    const problems1 = await getProblems(cookieHeader, tagsRange, count);
+    console.log("题目信息:", problems1);
+    const problems = encode_self(problems1);
+    const postData = querystring.stringify({
+      action: 'saveMashup',
+      isCloneContest: 'false',
+      parentContestIdAndName: '',
+      parentContestId: '',
+      contestName: contestName,
+      contestDuration: contestDuration.toString(),
+      problemsJson: problems,
+      csrf_token: csrfToken
+    });
+    console.log("[DEBUG] 最终请求体 postData：", postData);
+
+    const options: https.RequestOptions = {
+      hostname: 'codeforces.com',
+      path: '/data/mashup',
+      method: 'POST',
+      headers: {
+        'Host': 'codeforces.com',
+        'Cookie': cookieHeader,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': Buffer.byteLength(postData),
+        'Referer': 'https://codeforces.com/mashup/new',
+        'X-Csrf-Token': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://codeforces.com',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'Priority': 'u=0',
+        'Te': 'trailers'
+      }
+    };
+
+    const req = https.request(options, res => {
+      const chunks: Buffer[] = [];
+
+      res.on('data', chunk => {
+        chunks.push(chunk);
+      });
+
+      res.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          const encoding = res.headers['content-encoding'];
+          const responseBody = await decodeBuffer(buffer, encoding);
+          console.log(responseBody);
+          console.log('[+] 以上拉题请求响应:');
+          resolve();
+        } catch (e) {
+          console.error('[-] 解码响应失败:', e);
+          reject(e);
+        }
+      });
+      
+    });
+
+    req.on('error', err => {
+      console.error('[-] 拉题请求错误:', err);
+      reject(err);
+    });
+
+    req.write(postData);
+    req.end();
+  });
+}
+
 ```
 
 ### 内部流程：
