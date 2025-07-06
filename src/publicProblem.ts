@@ -12,6 +12,30 @@ import querystring from 'querystring';
  */
 
 
+function decodeBuffer(buffer: Buffer, encoding?: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (encoding === 'br') {
+      zlib.brotliDecompress(buffer, (err, result) => {
+        if (err) return reject(err);
+        resolve(result.toString());
+      });
+    } else if (encoding === 'gzip') {
+      zlib.gunzip(buffer, (err, result) => {
+        if (err) return reject(err);
+        resolve(result.toString());
+      });
+    } else if (encoding === 'deflate') {
+      zlib.inflate(buffer, (err, result) => {
+        if (err) return reject(err);
+        resolve(result.toString());
+      });
+    } else {
+      resolve(buffer.toString());
+    }
+  });
+}
+
+
 export async function catProblemnums(
   cookie: string,
   tagsRange: [number, number],
@@ -71,7 +95,7 @@ export async function catProblemnums(
             // 第一个 <tr> 是表头，需要排除
             const contentRowCount = trMatches ? trMatches.length - 1 : 0;
             const maxproblem = (lastPage - 1) * 100 + contentRowCount;
-            console.log("题目总数:", maxproblem);
+            console.log("该范围题目总数:", maxproblem);
             resolve(maxproblem);
           }
         }
@@ -169,6 +193,30 @@ export function pullProblem(
           return reject(e);
         }
 
+        //csrf测试
+        // const csr_match = html.match(/<input\s+type=['"]hidden['"]\s+name=['"]csrf_token['"]\s+value=['"]([a-f0-9]{32})['"]\s*\/?>/i);
+        // let csrf_test=""
+        // if (csr_match) {
+        //   csrf_test = csr_match[1];
+        //   console.log('[+] 提取到 csrf_token:', csrf_test);
+        // } else {
+        //   console.warn('[-] 未能提取 csrf_token');
+        //   csrf_test = '';
+        // }
+        //csrf测试
+
+        //在线状态测试
+        const online_match = html.match(/ahit_UX/);
+        let online_test=""
+        if (online_match) {
+          online_test = online_match[0];
+          console.log('[+] 在线:', online_test);
+        } else {
+          console.warn('[-] 已经离线');
+        }
+        //在线状态测试
+
+
         const tableMatch = html.match(/<table class="problems">[\s\S]*?<\/table>/);
         if (!tableMatch) {
           return reject(new Error("未找到题目表格"));
@@ -207,8 +255,9 @@ function encode_self(problems: { id: string; index: string }[]): string {
     id: p.id,
     index: String.fromCharCode(65 + i)  // 65 是 'A' 的 ASCII
   }));
-  const jsonStr = JSON.stringify(updated);
-  return encodeURIComponent(jsonStr);
+  const temps = JSON.stringify(updated);
+  console.log(temps);
+  return temps;
 }
 
 
@@ -222,78 +271,74 @@ export async function publicProblem(
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     const problems1 = await getProblems(cookieHeader, tagsRange, count);
-    console.log(problems1);
+    console.log("题目信息:", problems1);
     const problems = encode_self(problems1);
-    console.log(problems);
-  //   const postData = querystring.stringify({
-  //     action: 'saveMashup',
-  //     isCloneContest: 'false',
-  //     parentContestIdAndName: '',
-  //     parentContestId: '',
-  //     contestName,
-  //     contestDuration: contestDuration.toString(),
-  //     problemsJson: JSON.stringify(problems),
-  //     csrf_token: csrfToken
-  //   });
+    const postData = querystring.stringify({
+      action: 'saveMashup',
+      isCloneContest: 'false',
+      parentContestIdAndName: '',
+      parentContestId: '',
+      contestName: contestName,
+      contestDuration: contestDuration.toString(),
+      problemsJson: problems,
+      csrf_token: csrfToken
+    });
+    console.log("[DEBUG] 最终请求体 postData：", postData);
 
-  //   const options: https.RequestOptions = {
-  //     hostname: 'codeforces.com',
-  //     path: '/data/mashup',
-  //     method: 'POST',
-  //     headers: {
-  //       'Host': 'codeforces.com',
-  //       'Cookie': cookieHeader,
-  //       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-  //       'Accept': 'application/json, text/javascript, */*; q=0.01',
-  //       'Accept-Language': 'zh-CN,zh;q=0.8',
-  //       'Accept-Encoding': 'gzip, deflate, br',
-  //       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-  //       'Content-Length': Buffer.byteLength(postData),
-  //       'Referer': 'https://codeforces.com/mashup/new',
-  //       'X-Csrf-Token': csrfToken,
-  //       'X-Requested-With': 'XMLHttpRequest',
-  //       'Origin': 'https://codeforces.com',
-  //       'Sec-Fetch-Dest': 'empty',
-  //       'Sec-Fetch-Mode': 'cors',
-  //       'Sec-Fetch-Site': 'same-origin',
-  //       'Te': 'trailers'
-  //     }
-  //   };
+    const options: https.RequestOptions = {
+      hostname: 'codeforces.com',
+      path: '/data/mashup',
+      method: 'POST',
+      headers: {
+        'Host': 'codeforces.com',
+        'Cookie': cookieHeader,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': Buffer.byteLength(postData),
+        'Referer': 'https://codeforces.com/mashup/new',
+        'X-Csrf-Token': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://codeforces.com',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'Priority': 'u=0',
+        'Te': 'trailers'
+      }
+    };
 
-  //   const req = https.request(options, res => {
-  //     const chunks: Buffer[] = [];
+    const req = https.request(options, res => {
+      const chunks: Buffer[] = [];
 
-  //     res.on('data', chunk => {
-  //       chunks.push(chunk);
-  //     });
+      res.on('data', chunk => {
+        chunks.push(chunk);
+      });
 
-  //     res.on('end', () => {
-  //       const buffer = Buffer.concat(chunks);
-  //       let responseBody: string;
+      res.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          const encoding = res.headers['content-encoding'];
+          const responseBody = await decodeBuffer(buffer, encoding);
+          console.log(responseBody);
+          console.log('[+] 以上拉题请求响应:');
+          resolve();
+        } catch (e) {
+          console.error('[-] 解码响应失败:', e);
+          reject(e);
+        }
+      });
+      
+    });
 
-  //       const encoding = res.headers['content-encoding'];
-  //       if (encoding === 'br') {
-  //         responseBody = zlib.brotliDecompressSync(buffer).toString();
-  //       } else if (encoding === 'gzip') {
-  //         responseBody = zlib.gunzipSync(buffer).toString();
-  //       } else if (encoding === 'deflate') {
-  //         responseBody = zlib.inflateSync(buffer).toString();
-  //       } else {
-  //         responseBody = buffer.toString();
-  //       }
+    req.on('error', err => {
+      console.error('[-] 拉题请求错误:', err);
+      reject(err);
+    });
 
-  //       console.log('[+] 拉题请求响应:');
-  //       console.log(responseBody);
-  //       resolve();
-  //     });
-  //   });
-
-  //   req.on('error', err => {
-  //     console.error('[-] 拉题请求错误:', err);
-  //     reject(err);
-  //   });
-
-  //   req.write(postData);
-  //   req.end();
+    req.write(postData);
+    req.end();
   });
 }
