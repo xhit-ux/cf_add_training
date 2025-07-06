@@ -1,6 +1,5 @@
 ## 项目当前卡在了发送new mashup的数据包的位置，求路过的大佬能够帮忙看看  
 
-<<<<<<< HEAD
 也就是publicProblem.ts的publicProblem函数，发送梦的那个数据包会返回302被踢回首页  
 求大佬help
 
@@ -73,7 +72,7 @@ publicProblem(cookie, csrf, name, duration, tagsRange, count)
 
 4. 最终返回题目数组，构造比赛 JSON 数据包。
 
-## 5.核心代码逻辑说明  
+## 5. 核心代码逻辑说明  
 
 **获取题目流程（摘自 `getProblems` 函数）：**
 
@@ -90,7 +89,3 @@ const problems1 = await getProblems(cookieHeader, tagsRange, count);
 const problems = encode_self(problems1);
 
 ```
-=======
-也就是publicProblem.ts的publicProblem函数，发送的那个数据包会返回302被踢回首页  
-求大佬help
->>>>>>> 84acad6c63c80c6f68df71545737ca7c02b40edb
