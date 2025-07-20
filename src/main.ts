@@ -89,6 +89,12 @@ async function extractCookiesAsHeader(): Promise<string> {
     console.warn('[-] 未能提取 csrf_token');
     csrf_token = '';
   }
+  //TODO 
+  // 、
+  // 
+  //动态维护cookie
+  
+  //===================
 
   //构造页面部分
   
