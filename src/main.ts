@@ -139,6 +139,7 @@ ipcMain.on('cat-problem-range', async (event, contestName, contestDuration, tags
     return;
   }
   contestId = await publicProblem(csrf_token, contestName, contestDuration, tagsRange, count);
+  console.log("[+] contestID right:", contestId);
 });
 
 ipcMain.handle("publish-contest", async (event, groupId: string) => {
@@ -164,7 +165,6 @@ ipcMain.handle("publish-contest", async (event, groupId: string) => {
   );
   console.log("[+] 已发布")
   const text = await response.text();
-  console.log("[发布结果]", text);
 
   return { success: true, response: text };
 });

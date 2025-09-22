@@ -307,11 +307,12 @@ export async function publicProblem(
   try {
     const json = JSON.parse(text);
     if (json.success === "true" && json.newMashupContestId) {
+      console.log("[+] return contestID:", json.newMashupContestId);
       return json.newMashupContestId; // ✅ 返回 contestId
     }
   } catch (e) {
     console.error("解析 JSON 出错:", e);
   }
-
+  console.log("[-] contestId wrong")
   return ""; // 失败情况返回 null
 }

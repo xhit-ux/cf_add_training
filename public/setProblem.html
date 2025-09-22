@@ -185,14 +185,14 @@
         const overlay = document.getElementById("overlay");
         const popup = document.getElementById("popup");
         const table = document.getElementById("rangeTable");
+        const groupsId = localStorage.getItem('selectedGroups');
         document.getElementById("closePopup").addEventListener("click", () => {
                 overlay.style.display = "none";
                 popup.style.display = "none";
             });
 
         window.addEventListener('DOMContentLoaded', () => {
-            const groups = localStorage.getItem('selectedGroups');
-            document.getElementById('selectedGroups').textContent = groups ? groups : '无选中项';
+            document.getElementById('selectedGroups').textContent = groupsId ? groupsId : '无选中项';
         });
 
         document.getElementById("openPopup").addEventListener("click", () => {
@@ -255,14 +255,9 @@
         });
 
         document.getElementById("publishBtn").addEventListener("click", async () => {
-            const groups = localStorage.getItem('selectedGroups');
-            if (!groups) {
-                alert("你还没有选择 Group！");
-                return;
-            }
         
-            console.log("准备发布：", { groupId: groups, contestId: newMashupContestId });
-            await window.electronAPI.publishContest(groups);
+            console.log("准备发布：", { groupsId: groupsId });
+            await window.electronAPI.publishContest(groupsId);
             alert("发布完成！");
         });
     </script>
