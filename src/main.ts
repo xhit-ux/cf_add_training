@@ -72,6 +72,7 @@ async function extractCookiesAsHeader(): Promise<string> {
   fs.mkdirSync('cookies', { recursive: true });
   fs.writeFileSync('cookies/cookies.json', JSON.stringify(cookies, null, 2));
 
+
   const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
   cookie_all = cookieHeader;
   // console.log('\n[+] 构造出的 Cookie 请求头格式:');
@@ -131,8 +132,13 @@ ipcMain.handle('save-cookies', async () => {
 });
 
 ipcMain.on('cat-problem-range', async (event, contestName, contestDuration, tagsRange, count) => {
-  await publicProblem(cookie_all, csrf_token, contestName, contestDuration, tagsRange, count);
+  if (!csrf_token) {
+    console.error("[-] csrf_token 未初始化");
+    return;
+  }
+  await publicProblem(csrf_token, contestName, contestDuration, tagsRange, count);
 });
+
 
 
 app.whenReady().then(() => {

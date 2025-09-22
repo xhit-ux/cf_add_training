@@ -35,7 +35,7 @@ export async function fetchGroups(cookieHeader: string): Promise<string> {
         'Upgrade-Insecure-Requests': '1'
       }
     }
-
+    
     const req = https.request(options, res => {
       const chunks: any[] = []
       res.on('data', chunk => chunks.push(chunk))
