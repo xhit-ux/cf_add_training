@@ -267,7 +267,7 @@ export async function publicProblem(
   contestDuration: number,
   tagsRange: [number, number][],
   count: number
-): Promise<void> {
+): Promise<string> {
   // 用 Electron 的 session 拿 cookie（Cloudflare 认可的）
   const cookies = await session.fromPartition("persist:authsession").cookies.get({ url: "https://codeforces.com" });
   const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
@@ -301,5 +301,17 @@ export async function publicProblem(
   });
 
   console.log("[+] 状态:", response.status);
-  console.log("[+] 响应:", await response.text());
+  const text = await response.text();
+  console.log("[+] 响应:", text);
+
+  try {
+    const json = JSON.parse(text);
+    if (json.success === "true" && json.newMashupContestId) {
+      return json.newMashupContestId; // ✅ 返回 contestId
+    }
+  } catch (e) {
+    console.error("解析 JSON 出错:", e);
+  }
+
+  return ""; // 失败情况返回 null
 }

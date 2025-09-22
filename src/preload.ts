@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     duration: number,
     ranges: [number, number][],
     count: number
-  ) => ipcRenderer.send("cat-problem-range", name, duration, ranges, count)
+  ) => ipcRenderer.send("cat-problem-range", name, duration, ranges, count),
+
+  publicContest: (groups: string) => ipcRenderer.invoke("publish-contest", groups)
 });
 

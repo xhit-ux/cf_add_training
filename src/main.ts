@@ -131,15 +131,43 @@ ipcMain.handle('save-cookies', async () => {
   return { status: 'done' };
 });
 
+let contestId = "";
+
 ipcMain.on('cat-problem-range', async (event, contestName, contestDuration, tagsRange, count) => {
   if (!csrf_token) {
     console.error("[-] csrf_token 未初始化");
     return;
   }
-  await publicProblem(csrf_token, contestName, contestDuration, tagsRange, count);
+  contestId = await publicProblem(csrf_token, contestName, contestDuration, tagsRange, count);
 });
 
+ipcMain.handle("publish-contest", async (event, groupId: string) => {
+  if (!cookie_all || !csrf_token) {
+    throw new Error("Cookie 或 CSRF 还没有初始化！");
+  }
 
+  const formData = new URLSearchParams();
+  formData.append("csrf_token", csrf_token);
+  formData.append("action", "addContest");
+  formData.append("contestId", contestId);
+
+  const response = await session.fromPartition("persist:authsession").fetch(
+    `https://codeforces.com/group/${groupId}/contests/add`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": `https://codeforces.com/group/${groupId}/contests/add`,
+      },
+      body: formData.toString(),
+    }
+  );
+  console.log("[+] 已发布")
+  const text = await response.text();
+  console.log("[发布结果]", text);
+
+  return { success: true, response: text };
+});
 
 app.whenReady().then(() => {
   createWindow();

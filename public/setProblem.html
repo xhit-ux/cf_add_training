@@ -167,6 +167,7 @@
 
     <label>选中的 Group ID：</label>
     <div id="selectedGroups">(加载中...)</div>
+    <button id="publishBtn">前往发布</button>
 
     <div id="overlay"></div>
     <div id="popup">
@@ -214,6 +215,7 @@
             overlay.style.display = "block";
             popup.style.display = "block";
         });
+        
 
         document.getElementById("confirmRanges").addEventListener("click", async () => {
             const contestName = document.getElementById("contestName").value.trim();
@@ -250,6 +252,18 @@
             });
 
             await window.electronAPI.catProblemWithRange(contestName, contestDuration, ranges, count);
+        });
+
+        document.getElementById("publishBtn").addEventListener("click", async () => {
+            const groups = localStorage.getItem('selectedGroups');
+            if (!groups) {
+                alert("你还没有选择 Group！");
+                return;
+            }
+        
+            console.log("准备发布：", { groupId: groups, contestId: newMashupContestId });
+            await window.electronAPI.publishContest(groups);
+            alert("发布完成！");
         });
     </script>
 </body>
