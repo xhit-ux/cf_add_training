@@ -232,6 +232,7 @@ export function pullProblem(
         const tr = trMatches[offset];
         const aMatch = tr[0].match(/<a href="\/problemset\/problem\/(\d+)\/([A-Z])">/);
         if (!aMatch) {
+          console.log("[-] Error:",tr)
           return reject(new Error("未能从 <tr> 中解析出题号和编号"));
         }
 
