@@ -4,6 +4,24 @@ import * as fs from 'fs';
 import { fetchGroups, extractGroup } from './fetchGroups';
 import { publicProblem } from './publicProblem';
 import yaml from 'js-yaml';
+import crypto from "crypto";
+
+const SECRET_KEY = crypto.createHash("sha256").update("my-secret-key").digest(); 
+const IV = Buffer.alloc(16, 0);
+
+function encrypt(text: string): string {
+  const cipher = crypto.createCipheriv("aes-256-cbc", SECRET_KEY, IV);
+  return Buffer.concat([cipher.update(text, "utf8"), cipher.final()]).toString("base64");
+}
+
+function decrypt(enc: string): string {
+  try {
+    const decipher = crypto.createDecipheriv("aes-256-cbc", SECRET_KEY, IV);
+    return Buffer.concat([decipher.update(Buffer.from(enc, "base64")), decipher.final()]).toString("utf8");
+  } catch {
+    return "";
+  }
+}
 
 let win: BrowserWindow;
 
@@ -71,15 +89,39 @@ let CONFIG: { login: { username: string; password: string } } = { login: { usern
 
 function loadConfig() {
   try {
-    const cfgPath = path.join(__dirname, "../config.yaml"); // 根据你打包后的位置调整
+    const cfgPath = path.join(__dirname, "../config.yaml");
     const raw = fs.readFileSync(cfgPath, "utf8");
     const parsed = yaml.load(raw) as any;
     CONFIG = parsed || CONFIG;
-    console.log("[main] loaded config:", !!CONFIG?.login);
+
+    if (CONFIG?.login?.password) {
+      CONFIG.login.password = decrypt(CONFIG.login.password);
+    }
+
+    console.log("[main] loaded config:", !!CONFIG?.login);  
   } catch (e) {
     console.warn("[main] load config failed:", e);
   }
 }
+
+function saveConfig(username: string, password: string) {
+  const cfgPath = path.join(__dirname, "../config.yaml");
+  const data = {
+    login: {
+      username,
+      password: encrypt(password)
+    }
+  };
+  CONFIG = { login: { username, password } }; // 更新内存中的 CONFIG（注意存储的是明文）
+  fs.writeFileSync(cfgPath, yaml.dump(data), "utf8");
+  console.log("[main] config saved");
+}
+
+ipcMain.handle("save-config", (event, { username, password }) => {
+  saveConfig(username, password);
+  return true;
+});
+
 
 ipcMain.on("get-config-sync", (event) => {
   event.returnValue = CONFIG;

@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getConfig: () => ipcRenderer.sendSync("get-config-sync"),
 
+  saveConfig: (username:string, password:string) => ipcRenderer.invoke("save-config", { username, password }),
+
   onGroupHtml: (callback: (html: string) => void) =>
     ipcRenderer.on('group-html', (_, html) => callback(html)),
 
@@ -14,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ranges: [number, number][],
     count: number
   ) => ipcRenderer.send("cat-problem-range", name, duration, ranges, count),
+  
 
   publishContest: (groupId: string) => ipcRenderer.invoke("publish-contest", groupId)
 });

@@ -140,6 +140,124 @@
     });
   </script>
 
+  <script>
+  // 安全调用 getConfig/saveConfig（兼容 sync 或 async 暴露）
+  async function safeGetConfig() {
+    try {
+      if (window.electronAPI && typeof window.electronAPI.getConfig === 'function') {
+        const ret = window.electronAPI.getConfig();
+        if (ret && typeof ret.then === 'function') return await ret;
+        return ret;
+      }
+    } catch (e) { console.error('safeGetConfig error', e); }
+    return { login: { username: '', password: '' } };
+  }
+
+  async function safeSaveConfig(username, password) {
+    try {
+      if (window.electronAPI && typeof window.electronAPI.saveConfig === 'function') {
+        const ret = window.electronAPI.saveConfig(username, password);
+        if (ret && typeof ret.then === 'function') return await ret;
+        return ret;
+      }
+    } catch (e) { console.error('safeSaveConfig error', e); }
+    return false;
+  }
+
+  // 创建并显示 modal
+  function showCredentialsModal(defaultUser = '') {
+    // overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'cf-modal-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    });
+
+    // modal box
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      width: '420px', background: '#fff', padding: '18px 20px', borderRadius: '8px', boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+    });
+
+    box.innerHTML = `
+      <h3 style="margin:0 0 12px;font-size:1.1rem">请输入 Codeforces 登录信息\n</h3>
+      <h3 style="margin:0 0 12px;font-size:1.1rem">仅第一次运行时需要输入</h3>
+      <div style="margin-bottom:10px">
+        <label style="display:block;font-size:0.9rem;margin-bottom:6px">用户名 / 邮箱</label>
+        <input id="cf-username" type="text" value="${(defaultUser||'').replace(/"/g,'&quot;')}" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px" />
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:0.9rem;margin-bottom:6px">密码</label>
+        <input id="cf-password" type="password" placeholder="输入密码（不会明文保存）" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px" />
+      </div>
+      <div style="text-align:right">
+        <button id="cf-cancel" style="margin-right:8px;padding:8px 12px;border-radius:6px;border:1px solid #bbb;background:#f5f5f5;cursor:pointer">取消</button>
+        <button id="cf-save" style="padding:8px 12px;border-radius:6px;border:none;background:#007bff;color:#fff;cursor:pointer">保存并继续</button>
+      </div>
+      <div id="cf-msg" style="margin-top:10px;color:#b00;font-size:0.9rem;display:none"></div>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const inpUser = document.getElementById('cf-username');
+    const inpPass = document.getElementById('cf-password');
+    const btnSave = document.getElementById('cf-save');
+    const btnCancel = document.getElementById('cf-cancel');
+    const msg = document.getElementById('cf-msg');
+
+    function closeModal() { overlay.remove(); }
+
+    btnCancel.addEventListener('click', () => {
+      closeModal();
+    });
+
+    btnSave.addEventListener('click', async () => {
+      const u = inpUser.value.trim();
+      const p = inpPass.value;
+      if (!u) { msg.style.display = 'block'; msg.textContent = '请输入用户名/邮箱'; return; }
+      if (!p) { msg.style.display = 'block'; msg.textContent = '请输入密码'; return; }
+      msg.style.display = 'none';
+      try {
+        const ok = await safeSaveConfig(u, p);
+        if (ok) {
+          alert('账号密码已保存（密码会加密后写入配置文件）。');
+          closeModal();
+          location.reload(); // 重新加载页面以便自动填充使用新配置
+        } else {
+          msg.style.display = 'block';
+          msg.textContent = '保存配置失败，请重试';
+        }
+      } catch (e) {
+        console.error(e);
+        msg.style.display = 'block';
+        msg.textContent = '保存时发生错误';
+      }
+    });
+
+    // 回车提交
+    overlay.addEventListener('keyup', (ev) => {
+      if (ev.key === 'Enter') btnSave.click();
+      if (ev.key === 'Escape') btnCancel.click();
+    });
+
+    // focus first input
+    inpUser.focus();
+  }
+
+  // 初始化：检查 config，若缺用户名或密码则弹窗
+  window.addEventListener('DOMContentLoaded', async () => {
+    const cfg = await safeGetConfig();
+    const hasUser = cfg && cfg.login && cfg.login.username;
+    const hasPass = cfg && cfg.login && cfg.login.password;
+    if (!hasUser || !hasPass) {
+      showCredentialsModal(cfg && cfg.login ? cfg.login.username : '');
+    }
+  });
+</script>
+
+
+
 </body>
 
 </html>
