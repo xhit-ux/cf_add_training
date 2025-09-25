@@ -4,36 +4,12 @@ import { session } from "electron";
 
 /**
  * 拉题操作函数
- * @param cookieHeader 已提取的 cookie 请求头字符串
- * @param csrfToken 提取的 csrf_token
- * @param contestName 比赛名称
- * @param contestDuration 比赛时长（单位分钟）
- * @param problems 题目数组，每个元素包含 id 和 index，如 { id: '3442674', index: 'A' }
+ * @param catProblemnums 获取分值区间内的题目数量
+ * @param pullProblem 拉取单道题目信息（待改进，部分题目存在非标准输入输出流，未设置过滤）
+ * @param getProblems 题目信息汇总函数
+ * @param encode_self 题目信息编码
+ * @param publicProblem 发布题目至gym
  */
-
-
-function decodeBuffer(buffer: Buffer, encoding?: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (encoding === 'br') {
-      zlib.brotliDecompress(buffer, (err, result) => {
-        if (err) return reject(err);
-        resolve(result.toString());
-      });
-    } else if (encoding === 'gzip') {
-      zlib.gunzip(buffer, (err, result) => {
-        if (err) return reject(err);
-        resolve(result.toString());
-      });
-    } else if (encoding === 'deflate') {
-      zlib.inflate(buffer, (err, result) => {
-        if (err) return reject(err);
-        resolve(result.toString());
-      });
-    } else {
-      resolve(buffer.toString());
-    }
-  });
-}
 
 
 export async function catProblemnums(
