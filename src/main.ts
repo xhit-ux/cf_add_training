@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fetchGroups, extractGroup } from './fetchGroups';
 import { publicProblem } from './publicProblem';
+import yaml from 'js-yaml';
 
 let win: BrowserWindow;
 
@@ -66,6 +67,24 @@ function extractGroupPage(rawHtml: string): string {
   
 }
 
+let CONFIG: { login: { username: string; password: string } } = { login: { username: "", password: "" } };
+
+function loadConfig() {
+  try {
+    const cfgPath = path.join(__dirname, "../config.yaml"); // 根据你打包后的位置调整
+    const raw = fs.readFileSync(cfgPath, "utf8");
+    const parsed = yaml.load(raw) as any;
+    CONFIG = parsed || CONFIG;
+    console.log("[main] loaded config:", !!CONFIG?.login);
+  } catch (e) {
+    console.warn("[main] load config failed:", e);
+  }
+}
+
+ipcMain.on("get-config-sync", (event) => {
+  event.returnValue = CONFIG;
+});
+
 
 async function extractCookiesAsHeader(): Promise<string> {
   const cookies = await session.fromPartition('persist:authsession').cookies.get({});
@@ -112,6 +131,8 @@ async function extractCookiesAsHeader(): Promise<string> {
 }
 
 function createWindow() {
+  loadConfig();
+
   win = new BrowserWindow({
     width: 1200,
     height: 900,

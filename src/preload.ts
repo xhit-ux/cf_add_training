@@ -3,6 +3,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   saveCookies: () => ipcRenderer.invoke('save-cookies'),
 
+  getConfig: () => ipcRenderer.sendSync("get-config-sync"),
+
   onGroupHtml: (callback: (html: string) => void) =>
     ipcRenderer.on('group-html', (_, html) => callback(html)),
 

@@ -70,6 +70,76 @@
       window.location.href = "mygroup.html";
     });
   </script>
+  <!-- login.html (只展示关键 script) -->
+  <script>
+    const webview = document.getElementById('target');
+    if (!webview) {
+      console.error('[HOST] webview not found');
+    }
+
+    // 从主进程同步拿配置
+    const cfg = (window.electronAPI && typeof window.electronAPI.getConfig === 'function') ? window.electronAPI.getConfig() : { login: { username: '', password: '' } };
+
+    // 安全转义，避免注入时中断字符串
+    function esc(s) {
+      return String(s || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/`/g, '\\`');
+    }
+    const userEsc = esc(cfg.login.username || '');
+    const passEsc = esc(cfg.login.password || '');
+
+    // 在 webview 可用后开始轮询查找输入框并填充（不提交）
+    webview.addEventListener('dom-ready', () => {
+      console.log('[HOST] webview dom-ready, start autofill poll');
+      // 可选：打开 guest 的 DevTools 用于调试（启用后会弹出 guest devtools）
+      // try { webview.openDevTools(); } catch(e){}
+
+      let injected = false;
+      const intervalId = setInterval(async () => {
+        if (injected) return;
+        try {
+          // 只检测两个输入框是否存在
+          const found = await webview.executeJavaScript(
+            "!!(document.getElementById('handleOrEmail') && document.getElementById('password'))",
+            true
+          );
+          console.log('[HOST] poll found inputs:', found);
+          if (found) {
+            const res = await webview.executeJavaScript(`
+              (function(){
+                try {
+                  const u = document.getElementById('handleOrEmail');
+                  const p = document.getElementById('password');
+                  if(!u || !p) return { ok:false, reason: 'no inputs' };
+                  u.value = "${userEsc}";
+                  p.value = "${passEsc}";
+                  try {
+                    ['input','change'].forEach(ev => { u.dispatchEvent(new Event(ev, { bubbles: true })); p.dispatchEvent(new Event(ev, { bubbles: true })); });
+                  } catch(e){}
+                  return { ok:true };
+                } catch(e) { return { ok:false, reason: e && e.message }; }
+              })();
+            `, true);
+
+            console.log('[HOST] autofill result:', res);
+            injected = true;
+            clearInterval(intervalId);
+          }
+        } catch (err) {
+          console.warn('[HOST] exec error:', err);
+          clearInterval(intervalId);
+        }
+      }, 800);
+
+      // 超时保护：两分钟后停止
+      setTimeout(() => {
+        if (!injected) {
+          clearInterval(intervalId);
+          console.warn('[HOST] autofill poll timeout, stopped');
+        }
+      }, 2 * 60 * 1000);
+    });
+  </script>
+
 </body>
 
 </html>
