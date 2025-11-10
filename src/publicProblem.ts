@@ -19,6 +19,19 @@ interface CFProblemsetResponse {
   name?: string;
 }
 
+interface SelectedProblem {
+  contestId: string;
+  index: string;
+}
+
+interface ProblemQueryResponse {
+  success: string;
+  problems?: {
+    id: string;
+  }[];
+  comment?: string;
+}
+
 /**
  * Codeforces API endpoint that returns the entire public problemset.
  * We cache the result for a short period to avoid unnecessary network calls.
@@ -55,7 +68,7 @@ function pickRandomProblem(
   allProblems: CFProblem[],
   range: RatingRange,
   used: Set<string>
-): { id: string; index: string } {
+): SelectedProblem {
   const [min, max] = range;
   const pool = allProblems.filter(
     (p) =>
@@ -78,13 +91,13 @@ function pickRandomProblem(
   used.add(key);
   console.log("[+-+] 题目名称:", choice.name, "ID:", choice.contestId);
 
-  return { id: String(choice.contestId), index: choice.index };
+  return { contestId: String(choice.contestId), index: choice.index };
 }
 
 export async function getProblems(
   tagsRange: RatingRange[],
   count: number
-): Promise<{ id: string; index: string }[]> {
+): Promise<SelectedProblem[]> {
   if (tagsRange.length !== count) {
     throw new Error("Rating range count does not match requested problem count");
   }
@@ -93,6 +106,63 @@ export async function getProblems(
   const used = new Set<string>();
 
   return tagsRange.map((range) => pickRandomProblem(problemset, range, used));
+}
+
+async function queryProblemId(
+  problem: SelectedProblem,
+  csrfToken: string,
+  previouslyAddedProblemCount: number
+): Promise<string> {
+  const formData = new URLSearchParams({
+    action: "problemQuery",
+    problemQuery: `${problem.contestId}${problem.index}`,
+    previouslyAddedProblemCount: previouslyAddedProblemCount.toString(),
+    csrf_token: csrfToken
+  });
+
+  const response = await session
+    .fromPartition("persist:authsession")
+    .fetch("https://codeforces.com/data/mashup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        Referer: "https://codeforces.com/mashup/new",
+        "X-Csrf-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+        Origin: "https://codeforces.com",
+        Accept: "application/json, text/javascript, */*; q=0.01"
+      },
+      body: formData.toString()
+    });
+
+  if (!response.ok) {
+    throw new Error(`problemQuery failed: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as ProblemQueryResponse;
+  if (payload.success !== "true" || !payload.problems?.length) {
+    throw new Error(
+      `Unable to resolve problem ${problem.contestId}${problem.index}: ${
+        payload.comment || "no candidates"
+      }`
+    );
+  }
+
+  return payload.problems[0].id;
+}
+
+async function resolveProblemIds(
+  problems: SelectedProblem[],
+  csrfToken: string
+): Promise<{ id: string; index: string }[]> {
+  const resolved: { id: string; index: string }[] = [];
+
+  for (let i = 0; i < problems.length; i++) {
+    const canonicalId = await queryProblemId(problems[i], csrfToken, i);
+    resolved.push({ id: canonicalId, index: problems[i].index });
+  }
+
+  return resolved;
 }
 
 function encode_self(problems: { id: string; index: string }[]): string {
@@ -112,10 +182,11 @@ export async function publicProblem(
   tagsRange: RatingRange[],
   count: number
 ): Promise<string> {
-  const problems1 = await getProblems(tagsRange, count);
-  console.log("题目信息:", problems1);
+  const selectedProblems = await getProblems(tagsRange, count);
+  console.log("题目信息:", selectedProblems);
 
-  const problems = encode_self(problems1);
+  const canonicalProblems = await resolveProblemIds(selectedProblems, csrfToken);
+  const problems = encode_self(canonicalProblems);
   const postData = new URLSearchParams({
     action: "saveMashup",
     isCloneContest: "false",
