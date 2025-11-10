@@ -1,26 +1,42 @@
 {
-  "name": "cf_add_training",
-  "version": "1.0.0",
-  "main": "index.js",
-  "repository": "https://github.com/xhit-ux/cf_add_training.git",
-  "author": "xhit-ux <3416470064@qq.com>",
-  "license": "MIT",
-  "dependencies": {
-    "@electron/remote": "^2.1.2",
-    "@types/node": "^24.0.7",
-    "electron": "^37.1.0",
-    "js-yaml": "^4.1.0",
-    "jsdom": "^26.1.0",
-    "node-fetch": "^3.3.2",
-    "node-html-parser": "^7.0.1",
-    "typescript": "^5.8.3"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "yarn build && electron dist/main.js"
-  },
-  "devDependencies": {
-    "@types/js-yaml": "^4.0.9",
-    "@types/jsdom": "^21.1.7"
-  }
+	"name": "cf_add_training",
+	"version": "1.0.0",
+	"main": "dist/main.js",
+	"repository": "https://github.com/xhit-ux/cf_add_training.git",
+	"author": "xhit-ux <3416470064@qq.com>",
+	"license": "MIT",
+	"dependencies": {
+		"@electron/remote": "^2.1.2",
+		"js-yaml": "^4.1.0",
+		"jsdom": "^26.1.0",
+		"node-fetch": "^3.3.2",
+		"node-html-parser": "^7.0.1"
+	},
+	"devDependencies": {
+		"electron": "^37.1.0",
+		"typescript": "^5.8.3",
+		"@types/node": "^24.0.7",
+		"@types/js-yaml": "^4.0.9",
+		"@types/jsdom": "^21.1.7",
+		"electron-builder": "^26.0.12"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "yarn build && electron dist/main.js",
+		"dist": "yarn build && electron-builder"
+	},
+	"build": {
+		"appId": "com.example.cfaddtraining",
+		"productName": "CF Add Training",
+		"files": [
+			"dist/**/*",
+			"package.json"
+		],
+		"directories": {
+			"output": "release"
+		},
+		"win": {
+			"forceCodeSigning": false
+		}
+	}
 }

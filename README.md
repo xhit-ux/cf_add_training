@@ -1,82 +1,84 @@
 
-# Codeforces 登录与题目管理系统（基于 Electron）
+# Codeforces 鐧诲綍涓庨鐩鐞嗙郴缁燂紙鍩轰簬 Electron锛?
 
-## 1. 项目概述
+## 1. 椤圭洰姒傝堪
 
-该项目是一个基于 Electron 的桌面应用程序，旨在实现对 [Codeforces](https://codeforces.com) 平台的自动登录、题目拉取与发布操作。用户可以通过 GUI 界面登录 Codeforces，自动获取 Cookies，并基于题目标签区间和数量拉取指定题库题目，最终将其用于构建比赛或存储。
+璇ラ」鐩槸涓€涓熀浜?Electron 鐨勬闈㈠簲鐢ㄧ▼搴忥紝鏃ㄥ湪瀹炵幇瀵?[Codeforces](https://codeforces.com) 骞冲彴鐨勮嚜鍔ㄧ櫥褰曘€侀鐩媺鍙栦笌鍙戝竷鎿嶄綔銆傜敤鎴峰彲浠ラ€氳繃 GUI 鐣岄潰鐧诲綍 Codeforces锛岃嚜鍔ㄨ幏鍙?Cookies锛屽苟鍩轰簬棰樼洰鏍囩鍖洪棿鍜屾暟閲忔媺鍙栨寚瀹氶搴撻鐩紝鏈€缁堝皢鍏剁敤浜庢瀯寤烘瘮璧涙垨瀛樺偍銆?
 
 ---
 
-## 2. 技术选型
+## 2. 鎶€鏈€夊瀷
 
-| 技术                    | 说明                           |
+| 鎶€鏈?                   | 璇存槑                           |
 | ----------------------- | ------------------------------ |
-| **Electron**            | 用于构建跨平台的桌面应用程序   |
-| **TypeScript**          | 提高代码可维护性和类型安全     |
-| **Node.js + Fetch API** | 实现与 Codeforces 的 HTTP 通信 |
-| **HTML/CSS/JS**         | 构建前端交互界面               |
+| **Electron**            | 鐢ㄤ簬鏋勫缓璺ㄥ钩鍙扮殑妗岄潰搴旂敤绋嬪簭   |
+| **TypeScript**          | 鎻愰珮浠ｇ爜鍙淮鎶ゆ€у拰绫诲瀷瀹夊叏     |
+| **Node.js + Fetch API** | 瀹炵幇涓?Codeforces 鐨?HTTP 閫氫俊 |
+| **HTML/CSS/JS**         | 鏋勫缓鍓嶇浜や簰鐣岄潰               |
 
 ---
 
-## 3. 功能模块划分
+## 3. 鍔熻兘妯″潡鍒掑垎
 
-| 模块名             | 说明                                     |
+| 妯″潡鍚?            | 璇存槑                                     |
 | ------------------ | ---------------------------------------- |
-| `main.ts`          | Electron 主进程：窗口管理，监听事件      |
-| `preload.ts`       | 渲染进程和主进程通信桥梁                 |
-| `login.html`       | 登录页面：展示 WebView 登录并提取 Cookie |
-| `publicProblem.ts` | 拉取题目数据、生成比赛题单               |
-| `fetchGroups.ts`   | 登录后抓取 Codeforces 群组页面 HTML      |
-| `setProblem.html`  | 用户输入题目数量与标签范围进行筛选       |
-| `mygroup.html`     | 展示抓取到的群组页面（部分功能）         |
+| `main.ts`          | Electron 涓昏繘绋嬶細绐楀彛绠＄悊锛岀洃鍚簨浠?     |
+| `preload.ts`       | 娓叉煋杩涚▼鍜屼富杩涚▼閫氫俊妗ユ                 |
+| `login.html`       | 鐧诲綍椤甸潰锛氬睍绀?WebView 鐧诲綍骞舵彁鍙?Cookie |
+| `publicProblem.ts` | 鎷夊彇棰樼洰鏁版嵁銆佺敓鎴愭瘮璧涢鍗?              |
+| `fetchGroups.ts`   | 鐧诲綍鍚庢姄鍙?Codeforces 缇ょ粍椤甸潰 HTML      |
+| `setProblem.html`  | 鐢ㄦ埛杈撳叆棰樼洰鏁伴噺涓庢爣绛捐寖鍥磋繘琛岀瓫閫?      |
+| `mygroup.html`     | 灞曠ず鎶撳彇鍒扮殑缇ょ粍椤甸潰锛堥儴鍒嗗姛鑳斤級         |
 
 ---
 
-## 4. 项目运作流程
+## 4. 椤圭洰杩愪綔娴佺▼
 
-### （1）登录流程
+### 锛?锛夌櫥褰曟祦绋?
 
-1. 用户运行程序，Electron 加载 `login.html` 页面；
-2. `login.html` 中嵌入 Codeforces 登录页 WebView；
-3. 用户手动登录后，`preload.ts` 自动监听登录成功并提取 Cookie；
-4. Cookie 被保存到主进程，全局使用。
+1. 鐢ㄦ埛杩愯绋嬪簭锛孍lectron 鍔犺浇 `login.html` 椤甸潰锛?
+2. `login.html` 涓祵鍏?Codeforces 鐧诲綍椤?WebView锛?
+3. 鐢ㄦ埛鎵嬪姩鐧诲綍鍚庯紝`preload.ts` 鑷姩鐩戝惉鐧诲綍鎴愬姛骞舵彁鍙?Cookie锛?
+4. Cookie 琚繚瀛樺埌涓昏繘绋嬶紝鍏ㄥ眬浣跨敤銆?
 
-### （2）设置题目流程
+### 锛?锛夎缃鐩祦绋?
 
-1. 登录成功后跳转到 `setProblem.html`；
-2. 用户填写比赛信息：
-   - 比赛名称；
-   - 比赛时长；
-   - 题目数；
-   - 标签难度范围（支持多区间）；
-3. 页面发送 `ipcRenderer` 消息至主进程，调用 `publicProblem()`。
+1. 鐧诲綍鎴愬姛鍚庤烦杞埌 `setProblem.html`锛?
+2. 鐢ㄦ埛濉啓姣旇禌淇℃伅锛?
+   - 姣旇禌鍚嶇О锛?
+   - 姣旇禌鏃堕暱锛?
+   - 棰樼洰鏁帮紱
+   - 鏍囩闅惧害鑼冨洿锛堟敮鎸佸鍖洪棿锛夛紱
+3. 椤甸潰鍙戦€?`ipcRenderer` 娑堟伅鑷充富杩涚▼锛岃皟鐢?`publicProblem()`銆?
 
 
 
-### 内部流程：
+### 鍐呴儴娴佺▼锛?
 
-1. `catProblemnums()` 获取当前标签范围下题库总数；
+1. 閫氳繃 Codeforces API (`problemset.problems`) 鑾峰彇鏁版嵁骞跺畨瑁呮暟鎹繚瀛樺眬;
 
-2. 随机选择指定数量题号；
+2. 鎸夋嫨鐢ㄦ埛璁剧疆鐨勬礇鏈熷尯闂翠负闅忔満鎶藉彇鐨勮鐩紱
 
-3. 调用 pullProblem() 拉取题目信息；
+3. 闅忔満鎶藉彇涓€閮ㄤ笌鑼冨洿鍖哄垎瀛樼涓€瀵瑰寘鍚崟渚嬬殑棰樼洰锛屾嫿璐濇棫绠＄粏閬欓噺閲嶅;
 
-4. 最终返回题目数组，构造比赛 JSON 数据包。
+4. 鏁版嵁鍒嗚В鍚庡皢琚紦瀛樻垚 Mashup API 闇€瑕佺殑 JSON 鏍煎紡骞跺彂甯冩祦绋嬨€?
 
-## 5. 核心代码逻辑说明  
+## 5. 鏍稿績浠ｇ爜閫昏緫璇存槑  
 
-**获取题目流程（摘自 `getProblems` 函数）：**
+**鑾峰彇棰樼洰娴佺▼锛堟憳鑷?`getProblems` 鍑芥暟锛夛細**
 
 ```ts
-while (selectedNumbers.size < count) {
-  selectedNumbers.add(randomInt(1, totalProblems)); // 随机选择题号
-}
+const problemset = await loadProblemset(); // API 鑾峰彇鏁版嵁
+return ranges.map((range) => pickRandomProblem(problemset, range, used));
 ```
 
-**公共题目组装逻辑：**
+**鍏叡棰樼洰缁勮閫昏緫锛?*
 
 ```ts
-const problems1 = await getProblems(cookieHeader, tagsRange, count);
+const problems1 = await getProblems(tagsRange, count);
 const problems = encode_self(problems1);
 
 ```
+
+
+
