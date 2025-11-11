@@ -30,6 +30,7 @@
 		"productName": "CF Add Training",
 		"files": [
 			"dist/**/*",
+			"public/**/*",
 			"package.json"
 		],
 		"directories": {

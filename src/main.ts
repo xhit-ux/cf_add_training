@@ -1,37 +1,140 @@
-import { app, BrowserWindow, ipcMain, session } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
-import { fetchGroups, extractGroup } from './fetchGroups';
-import { publicProblem } from './publicProblem';
-import yaml from 'js-yaml';
+import { app, BrowserWindow, ipcMain, session } from "electron";
+import fs from "fs";
+import path from "path";
 import crypto from "crypto";
+import yaml from "js-yaml";
+import { fetchGroups, extractGroup } from "./fetchGroups";
+import { publicProblem } from "./publicProblem";
 
-const SECRET_KEY = crypto.createHash("sha256").update("my-secret-key").digest(); 
+const SECRET_KEY = crypto
+  .createHash("sha256")
+  .update("my-secret-key")
+  .digest();
 const IV = Buffer.alloc(16, 0);
+
+type AppConfig = { login: { username: string; password: string } };
+
+const paths = {
+  userDataDir: "",
+  configPath: "",
+  cookiesDir: "",
+  savedProblemsDir: "",
+  logDir: "",
+  logFile: ""
+};
 
 function encrypt(text: string): string {
   const cipher = crypto.createCipheriv("aes-256-cbc", SECRET_KEY, IV);
-  return Buffer.concat([cipher.update(text, "utf8"), cipher.final()]).toString("base64");
+  return Buffer.concat([cipher.update(text, "utf8"), cipher.final()]).toString(
+    "base64"
+  );
 }
 
 function decrypt(enc: string): string {
   try {
     const decipher = crypto.createDecipheriv("aes-256-cbc", SECRET_KEY, IV);
-    return Buffer.concat([decipher.update(Buffer.from(enc, "base64")), decipher.final()]).toString("utf8");
+    return Buffer.concat([
+      decipher.update(Buffer.from(enc, "base64")),
+      decipher.final()
+    ]).toString("utf8");
   } catch {
     return "";
   }
 }
 
-let win: BrowserWindow;
+function initStoragePaths() {
+  paths.userDataDir = app.getPath("userData");
+  paths.configPath = path.join(paths.userDataDir, "config.yaml");
+  paths.cookiesDir = path.join(paths.userDataDir, "cookies");
+  paths.savedProblemsDir = path.join(paths.userDataDir, "savedProblems");
+  paths.logDir = path.join(paths.userDataDir, "logs");
+  paths.logFile = path.join(paths.logDir, "app.log");
 
-let csrf_token = "";
-let cookie_all = "";
+  [paths.cookiesDir, paths.savedProblemsDir, paths.logDir].forEach((dir) => {
+    fs.mkdirSync(dir, { recursive: true });
+  });
+
+  if (!fs.existsSync(paths.configPath)) {
+    const defaultCfg = yaml.dump({ login: { username: "", password: "" } });
+    fs.writeFileSync(paths.configPath, defaultCfg, "utf8");
+  }
+
+  fs.appendFileSync(
+    paths.logFile,
+    `\n--- App start ${new Date().toISOString()} ---\n`
+  );
+}
+
+function log(level: "info" | "warn" | "error", message: string, ...args: any[]) {
+  const ts = new Date().toISOString();
+  const formatted = `[${ts}] [${level.toUpperCase()}] ${message}`;
+  console[level](formatted, ...args);
+
+  if (!paths.logFile) return;
+
+  const extra =
+    args.length > 0
+      ? " " +
+        args
+          .map((arg) => {
+            if (typeof arg === "string") return arg;
+            try {
+              return JSON.stringify(arg);
+            } catch {
+              return String(arg);
+            }
+          })
+          .join(" ")
+      : "";
+
+  try {
+    fs.appendFileSync(paths.logFile, `${formatted}${extra}\n`);
+  } catch {
+    // ignore write errors
+  }
+}
+
+let CONFIG: AppConfig = { login: { username: "", password: "" } };
+let win: BrowserWindow | null = null;
+let csrfToken = "";
+let cookieHeaderCache = "";
+let contestId = "";
+
+function loadConfig() {
+  try {
+    const raw = fs.readFileSync(paths.configPath, "utf8");
+    const parsed = yaml.load(raw) as AppConfig;
+    CONFIG = parsed || CONFIG;
+
+    if (CONFIG.login.password) {
+      CONFIG.login.password = decrypt(CONFIG.login.password);
+    }
+    log("info", "[main] config loaded", { hasLogin: !!CONFIG.login.username });
+  } catch (err) {
+    log("warn", "[main] load config failed", err);
+  }
+}
+
+function saveConfig(username: string, password: string) {
+  CONFIG = { login: { username, password } };
+  const persisted = {
+    login: {
+      username,
+      password: encrypt(password)
+    }
+  };
+  try {
+    fs.writeFileSync(paths.configPath, yaml.dump(persisted), "utf8");
+    log("info", "[main] config saved");
+  } catch (err) {
+    log("error", "[main] config save failed", err);
+  }
+}
 
 function extractGroupPage(rawHtml: string): string {
   let finalHtml = rawHtml.replace(
     /<th style="width: 2\.4em;"><\/th>/g,
-    `<th>请勾选拉题group</th>`
+    `<th>请选择Group</th>`
   );
   finalHtml = finalHtml.replace(
     /<th style="width: 7em;">Role<\/th>/g,
@@ -57,181 +160,135 @@ function extractGroupPage(rawHtml: string): string {
       <td>
         <a href="https://codeforces.com/group/${groupId}" class="groupName">${groupName}</a>
       </td>
-  
-      <td>
-        ${role}
-      </td>
-  
-      <td>
-        ${invitation}
-      </td>
-  
+      <td>${role}</td>
+      <td>${invitation}</td>
       <td class="time-row">
         <span class="format-time" data-locale="en">${since}</span>
       </td>
-  
       <td class="time-row">
-        <span title="Time when user was invited to group">
-          <span class="format-time" data-locale="en">${invited}</span>
-        </span>
+        <span class="format-time" data-locale="en">${invited}</span>
       </td>
-  
       <td>
         <input type="checkbox" name="group" value="${groupId}">
       </td>
     </tr>`;
     }
-  );  
-  
+  );
 }
-
-let CONFIG: { login: { username: string; password: string } } = { login: { username: "", password: "" } };
-
-function loadConfig() {
-  try {
-    const cfgPath = path.join(__dirname, "../config.yaml");
-    const raw = fs.readFileSync(cfgPath, "utf8");
-    const parsed = yaml.load(raw) as any;
-    CONFIG = parsed || CONFIG;
-
-    if (CONFIG?.login?.password) {
-      CONFIG.login.password = decrypt(CONFIG.login.password);
-    }
-
-    console.log("[main] loaded config:", !!CONFIG?.login);  
-  } catch (e) {
-    console.warn("[main] load config failed:", e);
-  }
-}
-
-function saveConfig(username: string, password: string) {
-  const cfgPath = path.join(__dirname, "../config.yaml");
-  const data = {
-    login: {
-      username,
-      password: encrypt(password)
-    }
-  };
-  CONFIG = { login: { username, password } }; // 更新内存中的 CONFIG（注意存储的是明文）
-  fs.writeFileSync(cfgPath, yaml.dump(data), "utf8");
-  console.log("[main] config saved");
-}
-
-ipcMain.handle("save-config", (event, { username, password }) => {
-  saveConfig(username, password);
-  return true;
-});
-
-
-ipcMain.on("get-config-sync", (event) => {
-  event.returnValue = CONFIG;
-});
-
 
 async function extractCookiesAsHeader(): Promise<string> {
-  const cookies = await session.fromPartition('persist:authsession').cookies.get({});
-  fs.mkdirSync('cookies', { recursive: true });
-  fs.writeFileSync('cookies/cookies.json', JSON.stringify(cookies, null, 2));
+  const cookies = await session
+    .fromPartition("persist:authsession")
+    .cookies.get({});
 
+  fs.mkdirSync(paths.cookiesDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(paths.cookiesDir, "cookies.json"),
+    JSON.stringify(cookies, null, 2),
+    "utf8"
+  );
 
-  const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
-  cookie_all = cookieHeader;
-  // console.log('\n[+] 构造出的 Cookie 请求头格式:');
-  // console.log(cookieHeader);
+  const cookieHeader = cookies
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
+  cookieHeaderCache = cookieHeader;
 
-  // 执行抓取 Group 页面的 HTML
-  const rawhtml = await fetchGroups(cookieHeader);
-  
-  //提取csrf
-  const match = rawhtml.match(/<input\s+type=['"]hidden['"]\s+name=['"]csrf_token['"]\s+value=['"]([a-f0-9]{32})['"]\s*\/?>/i);
+  const rawHtml = await fetchGroups(cookieHeader);
+  const match = rawHtml.match(
+    /<input\s+type=['"]hidden['"]\s+name=['"]csrf_token['"]\s+value=['"]([a-f0-9]{32})['"]\s*\/?>/i
+  );
   if (match) {
-    csrf_token = match[1];
-    console.log('[+] 提取到 csrf_token:', csrf_token);
+    csrfToken = match[1];
+    log("info", "[+] 提取到 csrf_token", csrfToken);
   } else {
-    console.warn('[-] 未能提取 csrf_token');
-    csrf_token = '';
+    log("warn", "[-] 未能提取 csrf_token");
+    csrfToken = "";
   }
-  //TODO 
-  // 、
-  // 
-  //动态维护cookie
-  
-  //===================
 
-  //构造页面部分
-  
-  const html = extractGroupPage(extractGroup(rawhtml));
-  // console.log(html);//修改后数据，控制台输出
-  win.loadFile(path.join(__dirname, '../public/mygroup.html'));
-
-  // 发送给前端页面（mygroup.html）
-  win.webContents.once('did-finish-load', () => {
-    win.webContents.send('group-html', html);
+  const html = extractGroupPage(extractGroup(rawHtml));
+  win?.loadFile(path.join(__dirname, "../public/mygroup.html"));
+  win?.webContents.once("did-finish-load", () => {
+    win?.webContents.send("group-html", html);
   });
 
   return cookieHeader;
 }
 
 function createWindow() {
-  loadConfig();
-
   win = new BrowserWindow({
     width: 1200,
     height: 900,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       webviewTag: true,
-      partition: 'persist:authsession'
+      partition: "persist:authsession"
     }
   });
 
-  win.loadFile(path.join(__dirname, '../public/login.html'));
+  win.loadFile(path.join(__dirname, "../public/login.html"));
 }
 
-ipcMain.handle('save-cookies', async () => {
+ipcMain.handle("save-config", (_, { username, password }) => {
+  saveConfig(username, password);
+  return true;
+});
+
+ipcMain.on("get-config-sync", (event) => {
+  event.returnValue = CONFIG;
+});
+
+ipcMain.handle("save-cookies", async () => {
   await extractCookiesAsHeader();
-  return { status: 'done' };
+  return { status: "done" };
 });
 
-let contestId = "";
-
-ipcMain.on('cat-problem-range', async (event, contestName, contestDuration, tagsRange, count) => {
-  if (!csrf_token) {
-    console.error("[-] csrf_token 未初始化");
-    return;
+ipcMain.on(
+  "cat-problem-range",
+  async (_, contestName, contestDuration, tagsRange, count) => {
+    if (!csrfToken) {
+      log("error", "[-] csrf_token 未初始化");
+      return;
+    }
+    contestId = await publicProblem(
+      csrfToken,
+      contestName,
+      contestDuration,
+      tagsRange,
+      count
+    );
+    log("info", "[+] contestID ready", contestId);
   }
-  contestId = await publicProblem(csrf_token, contestName, contestDuration, tagsRange, count);
-  console.log("[+] contestID right:", contestId);
-});
+);
 
-ipcMain.handle("publish-contest", async (event, groupId: string) => {
-  if (!cookie_all || !csrf_token) {
-    throw new Error("Cookie 或 CSRF 还没有初始化！");
+ipcMain.handle("publish-contest", async (_, groupId: string) => {
+  if (!cookieHeaderCache || !csrfToken) {
+    throw new Error("Cookie 或 CSRF 还未初始化");
   }
 
   const formData = new URLSearchParams();
-  formData.append("csrf_token", csrf_token);
+  formData.append("csrf_token", csrfToken);
   formData.append("action", "addContest");
   formData.append("contestId", contestId);
 
-  const response = await session.fromPartition("persist:authsession").fetch(
-    `https://codeforces.com/group/${groupId}/contests/add`,
-    {
+  const response = await session
+    .fromPartition("persist:authsession")
+    .fetch(`https://codeforces.com/group/${groupId}/contests/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Referer": `https://codeforces.com/group/${groupId}/contests/add`,
+        Referer: `https://codeforces.com/group/${groupId}/contests/add`
       },
-      body: formData.toString(),
-    }
-  );
-  console.log("[+] 已发布")
-  const text = await response.text();
+      body: formData.toString()
+    });
 
+  log("info", "[+] 已发布到小组", { groupId, status: response.status });
+  const text = await response.text();
   return { success: true, response: text };
 });
 
 app.whenReady().then(() => {
+  initStoragePaths();
+  loadConfig();
   createWindow();
 });
