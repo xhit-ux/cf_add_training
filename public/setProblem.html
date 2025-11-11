@@ -2,265 +2,330 @@
 <html lang="zh">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>题目设置</title>
-    <style>
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f9f9f9;
-            padding: 30px;
-            color: #333;
-        }
+  <meta charset="UTF-8" />
+  <title>设置拉题参数</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+      color: #333;
+    }
 
-        h2 {
-            text-align: center;
-        }
+    h2 {
+      text-align: center;
+    }
 
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
-        }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
 
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
 
-        #selectedGroups {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #555;
-        }
+    #selectedGroups {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
 
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-        button:hover {
-            background-color: #0056b3;
-        }
+    button:hover {
+      background-color: #0056b3;
+    }
 
-        /* 弹窗样式 */
-        #popup {
-            display: none;
-            position: fixed;
-            top: 20%;
-            max-height: 80vh;
-            overflow-y: auto;
-            left: 50%;
-            transform: translate(-50%, -20%);
-            background-color: #fff;
-            padding: 40px;
-            border: 1px solid #aaa;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            z-index: 9999;
-            width: 600px;
-        }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 20%;
+      max-height: 80vh;
+      overflow-y: auto;
+      left: 50%;
+      transform: translate(-50%, -20%);
+      background-color: #fff;
+      padding: 40px;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      z-index: 9999;
+      width: 600px;
+    }
 
-        #popup table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 15px;
-        }
+    #popup table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 15px;
+    }
 
-        #popup th {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            font-weight: bold;
-            border-bottom: 2px solid #0056b3;
-        }
+    #popup th {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      font-weight: bold;
+      border-bottom: 2px solid #0056b3;
+    }
 
-        #popup td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
+    #popup td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
 
-        #popup tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+    #popup tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
 
-        #popup input[type="number"] {
-            width: 90px;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+    #popup input[type="number"] {
+      width: 90px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
 
-        #overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9998;
-        }
-        .modal {
-          position: fixed;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
-          background: rgba(0, 0, 0, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+    }
 
-        .modal-content {
-          background: #fff;
-          padding: 20px 30px;
-          border-radius: 8px;
-          width: 400px;
-          position: relative;
-        }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #888;
+    }
 
-        .close {
-          position: absolute;
-          right: 10px;
-          top: 10px;
-          font-size: 22px;
-          cursor: pointer;
-          color: #888;
-        }
+    .close:hover {
+      color: #000;
+    }
 
-        .close:hover {
-          color: #000;
-        }
+    .busy-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
 
-        .modal-content input {
-          margin: 0 5px;
-          padding: 5px;
-          font-size: 14px;
-        }
-    </style>
+    .busy-mask.active {
+      display: flex;
+    }
+
+    .busy-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 32px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+      min-width: 240px;
+    }
+
+    .busy-spinner {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 4px solid rgba(15, 23, 42, 0.2);
+      border-top-color: #007bff;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <h2>设置拉题参数</h2>
+  <h2>设置拉题参数</h2>
 
-    <label for="contestName">名称：</label>
-    <input type="text" id="contestName" placeholder="例如：Training #1">
+  <label for="contestName">名称：</label>
+  <input type="text" id="contestName" placeholder="例如：Training #1">
 
-    <label for="contestDuration">时长（分钟）：</label>
-    <input type="number" id="contestDuration" value="120">
+  <label for="contestDuration">时长（分钟）：</label>
+  <input type="number" id="contestDuration" value="120">
 
-    <label for="numQuestions">输入题目个数（最多99）：</label>
-    <input type="number" id="numQuestions" min="1" max="99" />
+  <label for="numQuestions">题目数量（1-99）：</label>
+  <input type="number" id="numQuestions" min="1" max="99" />
 
-    <button id="openPopup">设置各题难度范围</button>
+  <button id="openPopup">设置题目难度区间</button>
 
-    <label>选中的 Group ID：</label>
-    <div id="selectedGroups">(加载中...)</div>
-    <button id="publishBtn">前往发布</button>
+  <label>已选 Group ID：</label>
+  <div id="selectedGroups">(加载中…)</div>
+  <button id="publishBtn">开始发布</button>
 
-    <div id="overlay"></div>
-    <div id="popup">
-        <span id="closePopup" class="close">&times;</span>
-        <table id="rangeTable" style="text-align: center;">
-            <!-- JS 中填充 -->
-        </table>
-        <div style="text-align: center;">
-            <button id="confirmRanges">确认拉取</button>
-        </div>
-        
+  <div id="overlay"></div>
+  <div id="popup">
+    <span id="closePopup" class="close">&times;</span>
+    <table id="rangeTable" style="text-align: center;">
+    </table>
+    <div style="text-align: center;">
+      <button id="confirmRanges">确认拉题</button>
     </div>
+  </div>
 
-    <script>
-        const overlay = document.getElementById("overlay");
-        const popup = document.getElementById("popup");
-        const table = document.getElementById("rangeTable");
-        const groupsId = localStorage.getItem('selectedGroups');
-        document.getElementById("closePopup").addEventListener("click", () => {
-                overlay.style.display = "none";
-                popup.style.display = "none";
-            });
+  <div id="busyMask" class="busy-mask">
+    <div class="busy-content">
+      <div class="busy-spinner"></div>
+      <p id="busyText">处理中...</p>
+    </div>
+  </div>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('selectedGroups').textContent = groupsId ? groupsId : '无选中项';
-        });
+  <script>
+    const overlay = document.getElementById("overlay");
+    const popup = document.getElementById("popup");
+    const table = document.getElementById("rangeTable");
+    const busyMask = document.getElementById("busyMask");
+    const busyText = document.getElementById("busyText");
+    const publishBtn = document.getElementById("publishBtn");
 
-        document.getElementById("openPopup").addEventListener("click", () => {
-            const n = parseInt(document.getElementById("numQuestions").value);
-            if (isNaN(n) || n <= 0 || n > 99) {
-                alert("请输入 1 ~ 99 之间的整数");
-                return;
-            }
+    function showBusy(text) {
+      busyText.textContent = text;
+      busyMask.classList.add("active");
+    }
 
-            table.innerHTML = "<tr><th>题目</th><th>800<=low</th><th>low<=high<=3500</th></tr>";
-            for (let i = 0; i < n; i++) {
-                table.innerHTML += `
+    function hideBusy() {
+      busyMask.classList.remove("active");
+    }
+
+    function loadSelectedGroups() {
+      const stored = localStorage.getItem('selectedGroups');
+      if (!stored) return [];
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return stored.split(',').map(id => id.trim()).filter(Boolean);
+      }
+      return [];
+    }
+
+    const groupsId = loadSelectedGroups();
+
+    document.getElementById("closePopup").addEventListener("click", () => {
+      overlay.style.display = "none";
+      popup.style.display = "none";
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('selectedGroups').textContent =
+        groupsId.length ? groupsId.join(', ') : '暂无选择，请返回上一页完成选择';
+    });
+
+    document.getElementById("openPopup").addEventListener("click", () => {
+      const n = parseInt(document.getElementById("numQuestions").value, 10);
+      if (isNaN(n) || n <= 0 || n > 99) {
+        alert("请输入 1 ~ 99 之间的整数");
+        return;
+      }
+
+      table.innerHTML = "<tr><th>题目</th><th>800 ≤ low</th><th>low ≤ high ≤ 3500</th></tr>";
+      for (let i = 0; i < n; i++) {
+        table.innerHTML += `
           <tr>
             <td>第 ${i + 1} 题</td>
             <td><input type="number" min="800" max="3500" /></td>
             <td><input type="number" min="800" max="3500" /></td>
           </tr>`;
-            }
+      }
 
-            overlay.style.display = "block";
-            popup.style.display = "block";
-        });
-        
+      overlay.style.display = "block";
+      popup.style.display = "block";
+    });
 
-        document.getElementById("confirmRanges").addEventListener("click", async () => {
-            const contestName = document.getElementById("contestName").value.trim();
-            const contestDuration = parseInt(document.getElementById("contestDuration").value);
-            const rows = [...table.querySelectorAll("tr")].slice(1); // skip header
-            const ranges = [];
 
-            for (const row of rows) {
-                const inputs = row.querySelectorAll("input");
-                const low = parseInt(inputs[0].value);
-                const high = parseInt(inputs[1].value);
+    document.getElementById("confirmRanges").addEventListener("click", async () => {
+      const contestName = document.getElementById("contestName").value.trim();
+      const contestDuration = parseInt(document.getElementById("contestDuration").value, 10);
+      const rows = [...table.querySelectorAll("tr")].slice(1);
+      const ranges = [];
 
-                if (
-                    isNaN(low) || isNaN(high) ||
-                    low < 800 || high > 3500 || low > high
-                ) {
-                    alert("每一题的范围必须在 800~3500 且 low <= high");
-                    return;
-                }
+      for (const row of rows) {
+        const inputs = row.querySelectorAll("input");
+        const low = parseInt(inputs[0].value, 10);
+        const high = parseInt(inputs[1].value, 10);
 
-                ranges.push([low, high]);
-            }
+        if (
+          isNaN(low) || isNaN(high) ||
+          low < 800 || high > 3500 || low > high
+        ) {
+          alert("每道题的区间必须在 800~3500 且满足 low ≤ high");
+          return;
+        }
 
-            overlay.style.display = "none";
-            popup.style.display = "none";
+        ranges.push([low, high]);
+      }
 
-            const count = ranges.length;
+      overlay.style.display = "none";
+      popup.style.display = "none";
 
-            console.log("拉题参数：", {
-                contestName,
-                contestDuration,
-                count,
-                ranges
-            });
+      showBusy("正在拉取题目，请稍候…");
+      try {
+        await window.electronAPI.catProblemWithRange(contestName, contestDuration, ranges, ranges.length);
+        alert("题目选择完成，可继续配置或直接发布。");
+      } catch (error) {
+        console.error(error);
+        alert("拉题失败：" + (error?.message || error));
+      } finally {
+        hideBusy();
+      }
+    });
 
-            await window.electronAPI.catProblemWithRange(contestName, contestDuration, ranges, count);
-        });
+    publishBtn.addEventListener("click", async () => {
+      if (!groupsId.length) {
+        alert("未检测到已选择的 Group，请返回上一页进行选择。");
+        return;
+      }
 
-        document.getElementById("publishBtn").addEventListener("click", async () => {
-        
-            console.log("准备发布：", { groupsId: groupsId });
-            await window.electronAPI.publishContest(groupsId);
-            alert("发布完成！");
-        });
-    </script>
+      showBusy("正在发布到选定的小组…");
+      publishBtn.disabled = true;
+      try {
+        const result = await window.electronAPI.publishContest(groupsId);
+        const failed = (result?.results || []).filter((item) => item.error);
+        if (failed.length) {
+          alert(`部分小组发布失败：\n${failed.map((f) => `${f.groupId}: ${f.error || '未知错误'}`).join('\n')}`);
+        } else {
+          alert("发布完成，所有小组均已同步。");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("发布失败：" + (error?.message || error));
+      } finally {
+        hideBusy();
+        publishBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 
 </html>

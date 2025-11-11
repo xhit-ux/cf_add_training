@@ -243,12 +243,11 @@ ipcMain.handle("save-cookies", async () => {
   return { status: "done" };
 });
 
-ipcMain.on(
+ipcMain.handle(
   "cat-problem-range",
   async (_, contestName, contestDuration, tagsRange, count) => {
     if (!csrfToken) {
-      log("error", "[-] csrf_token 未初始化");
-      return;
+      throw new Error("CSRF 未初始化，请先保存 Cookie");
     }
     contestId = await publicProblem(
       csrfToken,
@@ -258,33 +257,51 @@ ipcMain.on(
       count
     );
     log("info", "[+] contestID ready", contestId);
+    return contestId;
   }
 );
 
-ipcMain.handle("publish-contest", async (_, groupId: string) => {
+ipcMain.handle("publish-contest", async (_, groupIds: string[]) => {
   if (!cookieHeaderCache || !csrfToken) {
     throw new Error("Cookie 或 CSRF 还未初始化");
   }
+  if (!Array.isArray(groupIds) || groupIds.length === 0) {
+    throw new Error("请至少选择一个 Group");
+  }
 
-  const formData = new URLSearchParams();
-  formData.append("csrf_token", csrfToken);
-  formData.append("action", "addContest");
-  formData.append("contestId", contestId);
+  const results: Array<{ groupId: string; status?: number; response?: string; error?: string }> = [];
 
-  const response = await session
-    .fromPartition("persist:authsession")
-    .fetch(`https://codeforces.com/group/${groupId}/contests/add`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Referer: `https://codeforces.com/group/${groupId}/contests/add`
-      },
-      body: formData.toString()
-    });
+  for (const groupId of groupIds) {
+    const formData = new URLSearchParams();
+    formData.append("csrf_token", csrfToken);
+    formData.append("action", "addContest");
+    formData.append("contestId", contestId);
 
-  log("info", "[+] 已发布到小组", { groupId, status: response.status });
-  const text = await response.text();
-  return { success: true, response: text };
+    try {
+      const response = await session
+        .fromPartition("persist:authsession")
+        .fetch(`https://codeforces.com/group/${groupId}/contests/add`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Referer: `https://codeforces.com/group/${groupId}/contests/add`
+          },
+          body: formData.toString()
+        });
+
+      const text = await response.text();
+      log("info", "[+] 已发布到小组", { groupId, status: response.status });
+      results.push({ groupId, status: response.status, response: text });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "未知错误，发布失败";
+      log("error", "[-] 发布到小组失败", { groupId, error: message });
+      results.push({ groupId, error: message });
+    }
+  }
+
+  const success = results.every((item) => !item.error);
+  return { success, results };
 });
 
 app.whenReady().then(() => {

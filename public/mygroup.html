@@ -2,113 +2,238 @@
 <html lang="zh">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>我的 Codeforces Groups</title>
-    <style>
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            padding: 20px;
-            color: #333;
-        }
-    
-        h2 {
-            text-align: center;
-            color: #444;
-        }
-    
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-    
-        th,
-        td {
-            padding: 12px 15px;
-            text-align: left;
-            border: 1px solid #dee2e6;
-        }
-    
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-    
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-    
-        tr:hover {
-            background-color: #e9ecef;
-        }
-    
-        input[type="checkbox"] {
-            transform: scale(1.2);
-            cursor: pointer;
-        }
-    
-        a.groupName {
-            color: #007bff;
-            text-decoration: none;
-        }
-    
-        a.groupName:hover {
-            text-decoration: underline;
-        }
-        #confirmButton {
-          padding: 10px 20px;
-          font-size: 16px;
-          background-color: #28a745;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-        }
+  <meta charset="UTF-8" />
+  <title>我的 Codeforces Groups</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
 
-        #confirmButton:hover {
-          background-color: #218838;
-        }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fb;
+      color: #1f2d3d;
+      margin: 0;
+      padding: 0;
+    }
 
-    </style>
+    header {
+      padding: 24px 32px 8px;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+
+    p.subtext {
+      margin: 0;
+      color: #6c757d;
+      font-size: 14px;
+    }
+
+    .card {
+      margin: 0 32px 24px;
+      background-color: #fff;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      padding: 24px;
+    }
+
+    .table-wrapper {
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid #e4e9f2;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #0f62fe;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    tr:not(:last-child) td {
+      border-bottom: 1px solid #edf1f7;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fbff;
+    }
+
+    tr:hover td {
+      background-color: #eef4ff;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.1);
+      cursor: pointer;
+    }
+
+    a.groupName {
+      color: #0f62fe;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a.groupName:hover {
+      text-decoration: underline;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #0f62fe;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .toolbar button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background-color: #28a745;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .toolbar button:disabled {
+      background-color: #94d3a2;
+      cursor: not-allowed;
+    }
+
+    .toolbar button:not(:disabled):hover {
+      background-color: #1f8b39;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 
 </head>
 
 <body>
-    <h2>Group 列表</h2>
-    <table border="1" style="width: 100%;">
-        <tbody id="groupBody">
-            <tr>
-                <td>加载中...</td>
-            </tr>
-        </tbody>
-    </table>
-    <div style="text-align: center; margin-top: 20px;">
-        <button id="confirmButton">勾选完成，点击进行题目设置</button>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <header>
+    <h2>选择目标 Group</h2>
+    <p class="subtext">
+      勾选需要同步 Mashup 的所有小组，系统将依次添加；支持多选。
+    </p>
+  </header>
+
+  <div class="card">
+    <div class="toolbar">
+      <span class="pill" id="selectionIndicator">已选择 0 个 Group</span>
+      <button id="confirmButton" disabled>确定，前往题目配置</button>
     </div>
-    
 
-    <script>
-        window.electronAPI.onGroupHtml((html) => {
-            document.getElementById('groupBody').innerHTML = html
-        })
-        document.getElementById('confirmButton').addEventListener('click', () => {
-            const checkboxes = document.querySelectorAll('input[name="group"]:checked');
-            const selected = Array.from(checkboxes).map(cb => cb.value);
-            if (selected.length != 1) {
-                alert('暂不支持多 Group 批量拉题！');
-                return;
-            }
+    <div class="table-wrapper">
+      <table>
+        <tbody id="groupBody">
+          <tr>
+            <td>正在加载 Group 列表…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-            // 保存选中 group 到 localStorage
-            localStorage.setItem('selectedGroups', selected.join(', '));
+  <script>
+    const groupBody = document.getElementById('groupBody');
+    const indicator = document.getElementById('selectionIndicator');
+    const confirmBtn = document.getElementById('confirmButton');
+    const overlay = document.getElementById('loadingOverlay');
 
-            // 跳转到题目设置页面
-            location.href = 'setProblem.html';
-        });
-    </script>
+    function updateSelectionIndicator() {
+      const selected = document.querySelectorAll('input[name="group"]:checked');
+      indicator.textContent = `已选择 ${selected.length} 个 Group`;
+      confirmBtn.disabled = selected.length === 0;
+    }
+
+    window.electronAPI.onGroupHtml((html) => {
+      groupBody.innerHTML = html;
+      updateSelectionIndicator();
+
+      groupBody.addEventListener('change', (event) => {
+        const target = event.target;
+        if (target && typeof target.matches === 'function' && target.matches('input[name="group"]')) {
+          updateSelectionIndicator();
+        }
+      });
+    });
+
+    confirmBtn.addEventListener('click', () => {
+      const selected = Array.from(document.querySelectorAll('input[name="group"]:checked')).map(cb => cb.value);
+      if (!selected.length) {
+        alert('请至少选择一个 Group');
+        return;
+      }
+
+      localStorage.setItem('selectedGroups', JSON.stringify(selected));
+      confirmBtn.disabled = true;
+      overlay.classList.add('active');
+
+      setTimeout(() => {
+        location.href = 'setProblem.html';
+      }, 300);
+    });
+  </script>
 </body>
 
 </html>
