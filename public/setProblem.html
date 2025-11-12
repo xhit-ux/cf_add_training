@@ -292,7 +292,7 @@
       showBusy("正在拉取题目，请稍候…");
       try {
         await window.electronAPI.catProblemWithRange(contestName, contestDuration, ranges, ranges.length);
-        alert("题目选择完成，可继续配置或直接发布。");
+        alert("题目选择完成，并已发布到账号gym，可继续配置或直接发布。");
       } catch (error) {
         console.error(error);
         alert("拉题失败：" + (error?.message || error));
