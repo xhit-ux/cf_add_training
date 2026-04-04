@@ -1,100 +1,185 @@
-# CF Add Training
+# CF-Add-Training — 基于流量的自动化请求分析与构造工具
 
-Electron 应用，用来把 Codeforces 题目一键拉进训练比赛（Mashup），并推送到指定的小组 Gym。它结合了手动登录（绕过人机验证）、官方公开 API，以及必要的会话内请求，来保障自动化流程稳定可靠。
+> 以 Burp Suite 流量捕获为起点，逆向分析 Codeforces 平台认证与业务接口，实现从 **请求截获 → 结构化解析 → 自动化批量构造** 的全链路工具化。
 
-## 功能亮点
+---
 
-- **手动绕过防刷**：通过内置 WebView 登录 Codeforces，用户亲自通过人机认证，应用自动保存 `persist:authsession` 下的全部 Cookie。
-- **加密凭据**：GUI 中保存的账号密码会写入 `config.yaml`，使用 AES-256-CBC 对密码进行对称加密。
-- **可视化选题**：在 `setProblem.html` 中设置题目数与分值区间（支持多道题不同区间），应用将自动使用 Codeforces `problemset.problems` API 获取候选题。
-- **精准匹配 problemId**：拿到 contestId/index 后，再用会话内的 `/data/mashup` `problemQuery` 接口换取真实的 `problemId`，确保最终提交的数据与网页版一致。
-- **一键发布**：自动调用 Mashup 创建接口得到新的 contestId，并把它加入勾选的小组（`https://codeforces.com/group/<id>/contests/add`）。
+## 项目背景
 
-## 技术栈与目录
+在安全测试与渗透评估过程中，Burp Suite 是捕获、分析 HTTP/HTTPS 流量的核心工具。本项目源于一次对 Codeforces 平台的**授权安全测试**：通过 Burp Suite Proxy 拦截并分析其登录认证、CSRF Token 签发、Mashup 比赛创建等关键业务流程的请求报文，提炼出完整的接口调用链，最终将分析成果封装为可复用的桌面自动化工具。
 
-| 模块 | 说明 |
-| --- | --- |
-| Electron + TypeScript | 桌面端容器与主进程逻辑 |
-| `src/main.ts` | BrowserWindow、持久化 session、IPC、CSRF 与 contest 发布 |
-| `src/fetchGroups.ts` | 使用已登录 Cookie 抓取小组列表 HTML |
-| `src/publicProblem.ts` | 调用 CF API、问题随机选择、problemQuery、Mashup 发布 |
-| `src/preload.ts` | 在渲染进程暴露受限的 IPC 接口 |
-| `public/*.html` | 登录、选择小组与配置题目的前端界面 |
+**核心价值：** 将 Burp Suite 中"一次性"的流量分析经验，沉淀为可持续运行的程序化资产。
 
-## 工作流概览
+---
 
-1. **登录**：启动应用后加载 `public/login.html`，其中的 `<webview>` 打开 Codeforces。用户手动登录并通过人机认证。
-2. **保存 Cookie**：点击“保存”按钮后，主进程调用 `session.fromPartition('persist:authsession')`，序列化 Cookie 到 `cookies/cookies.json`，并抓取 `https://codeforces.com/groups/my` 提取 CSRF 和可用小组列表。
-3. **选择题目**：在 `setProblem.html` 中填写比赛名、时长、题目数以及每道题的 rating 区间。IPC 通知主进程后：
-   - 使用 `problemset.problems` API 拉取完整题库并缓存 5 分钟；
-   - 在每个区间内随机抽题，并避免重复；
-   - 对每道 contestId/index 调用 `problemQuery`，拿到 `problemId`；
-   - 构造符合 Mashup 要求的 `problemsJson` 并调用 `/data/mashup` 创建比赛。
-4. **发布到小组**：记录下返回的 `newMashupContestId`，在“发布”动作中向选定小组的 `contests/add` 提交表单，把比赛加入该 Group 的 Mashup 列表。
+## 技术路线
 
-## 环境要求
-
-- Node.js ≥ 18
-- Yarn ≥ 1.22（项目使用 `yarn` 脚本）
-- 已注册的 Codeforces 账号，可访问目标小组并具有添加 Mashup 的权限
-- Windows 系统（当前构建流程以 Windows 为主，其他平台需自行验证）
-
-## 安装与运行
-
-```bash
-# 安装依赖
-yarn install
-
-# 编译 TypeScript（输出到 dist/）
-yarn build
-
-# 开发模式：先 build 再启动 Electron
-yarn start
-
-# 生成安装包（需 electron-builder 已配置的环境）
-yarn dist
+```
+┌─────────────┐  抓包分析   ┌──────────────┐  结构化映射   ┌────────────────┐
+│ Burp Suite  │ ──────────▶ │ 接口逆向文档  │ ──────────▶  │ 自动化请求引擎  │
+│ (流量捕获)   │            │ (请求/响应)   │             │ (Electron/TS)  │
+└─────────────┘            └──────────────┘             └────────────────┘
 ```
 
-首次启动时，会自动在根目录生成 `config.yaml`（若不存在）。
+### 阶段一：流量捕获与分析（Burp Suite）
 
-## 使用指南
+利用 Burp Suite Proxy 对 Codeforces 平台进行全链路流量拦截，重点关注：
 
-1. 打开应用后在 WebView 中完成 Codeforces 登录，必要时手动解决验证码/人机验证。
-2. 点击界面上的“保存 Cookie”或同等按钮，让主进程同步 cookies、CSRF 以及小组列表。成功后会进入 `mygroup.html`，勾选希望推送的 Group。
-3. 跳转到 `setProblem.html`：
-   - 设置比赛名称与时长（分钟）；
-   - 输入题目数量（1~99），再逐题配置分值区间（800~3500）；
-   - 点击“设置题目难度范围”弹窗并确认，主进程会自动抽题、调用 API、并保存 contestId。
-4. 确认小组选择，点击“开始发布”。如一切顺利，该 Mashup 会出现在对应 Group 的 “Contests → Mashups” 列表中。
+| 分析目标 | Burp Suite 功能 | 输出成果 |
+|---|---|---|
+| 登录认证流程 | Proxy → HTTP History 过滤 | 识别 Session Cookie 签发机制与 CSRF Token 生成规律 |
+| 小组列表接口 | Repeater 手动重放验证 | 确认 `/groups/my` 接口的鉴权依赖与参数结构 |
+| Mashup 创建流程 | Proxy + Repeater 联动 | 提取 `problemQuery` → `problemId` 的映射规则 |
+| 反爬与人机验证 | Intercept 观察 302/JS 跳转 | 确定必须通过 WebView 模拟真实浏览器行为的节点 |
 
-> **提示**：若抽题或 problemQuery 失败，控制台会输出详细报错。可以调整分值区间或降低题目数量后重试。
+> **关键发现：** Codeforces 的 Mashup 发布接口依赖服务端签发的 `csrf_token`（32 位十六进制），该 Token 与用户 Session 绑定、嵌入 HTML 表单 `<input type="hidden">` 中，无法通过静态参数复用，必须在登录后从页面响应中动态提取。
 
-## 配置与数据
+### 阶段二：请求结构化与映射
 
-| 文件 | 说明 |
-| --- | --- |
-| `config.yaml` | GUI 中保存的用户名/密码；密码字段经过 AES-256-CBC 加密 |
-| `cookies/cookies.json` | 最近一次保存的浏览器 Cookie，供调试或备份使用 |
-| `savedProblems/` | 可根据业务需要保存抽题结果（当前逻辑未使用，可自定义） |
+将 Burp Suite 中捕获的原始请求报文，解构为程序可消费的结构化模板：
 
-> **安全注意**：`config.yaml` 与 `cookies/` 都包含敏感信息，请勿加入版本控制，也不要在公共环境中泄露。
+```typescript
+// 从 Burp Repeater 中还原的请求结构示例
+interface CapturedRequest {
+  method: "POST";
+  endpoint: "/data/mashup";
+  headers: {
+    "X-Csrf-Token": string;    // 动态，需登录后从页面 HTML 提取
+    "Cookie": string;          // 由 Electron session 管理模块注入
+    "X-Requested-With": "XMLHttpRequest";
+  };
+  body: {
+    action: "saveMashup" | "problemQuery";
+    contestName: string;
+    contestDuration: number;
+    problemsJson: string;      // 由 problemQuery 接口逐题转换得到
+    csrf_token: string;        // 与 header 中的 X-Csrf-Token 双重校验
+  };
+}
+```
 
-## 开发与调试
+### 阶段三：自动化请求引擎
 
-- TypeScript 编译配置位于 `tsconfig.json`，目标 ES2020 + CommonJS。
-- Electron 主进程开启了 `contextIsolation`，若需新增渲染进程能力，请通过 `preload.ts` 暴露受控 API。
-- 可以使用开发者工具（`Ctrl+Shift+I`）调试前端界面；主进程日志会输出到终端。
-- `publicProblem.ts` 中的 `loadProblemset()` 具备简单缓存，如需更频繁地刷新，可调整 `PROBLEMSET_CACHE_TTL`。
+基于 Electron + TypeScript 构建桌面工具，封装从认证到发布的完整请求链：
 
-## 常见问题
+```
+src/
+├── main.ts              # 主进程：Cookie 持久化、IPC 调度、CSRF 管理、发布到小组
+├── fetchGroups.ts       # 自动化获取用户小组列表（对应 Burp 分析的 GET 接口）
+├── publicProblem.ts     # 抽题 + problemQuery + Mashup 发布（对应 Burp 分析的 POST 接口链）
+├── preload.ts           # 渲染进程安全桥接（contextIsolation）
+public/
+├── login.html           # WebView 登录页（绕过人机验证环节）
+├── mygroup.html         # 小组选择界面（解析并渲染 group 列表 HTML）
+├── setProblem.html      # 题目配置界面（设置比赛参数与 rating 区间）
+```
 
-| 问题 | 处理方式 |
-| --- | --- |
-| 登录后点击保存 Cookie 报错 `csrf_token` 为空 | 确保登录成功并访问过任一 Codeforces 页面，再次点击保存 |
-| `problemQuery` 返回 `Unable to resolve problem` | 该 contestId/index 暂不可用，换一个 rating 区间或减少题目数量 |
-| 发布到小组失败 | 检查当前账号是否拥有向该 Group 添加 Mashup 的权限，或确认 CSRF/会话未过期 |
-| 编译失败 `node-gyp` | 确保 Node 版本 ≥18，且在 Windows 上安装好 `windows-build-tools` |
+---
+
+## 核心能力
+
+### 1. 流量驱动的接口逆向
+
+- 通过 Burp Suite Proxy 捕获 Codeforces 平台 **4 个关键业务端点** 的请求/响应报文
+  - `GET /groups/my` — 获取小组列表（需鉴权）
+  - `POST /data/mashup` `action=problemQuery` — 题目 ID 映射
+  - `POST /data/mashup` `action=saveMashup` — 创建 Mashup 比赛
+  - `POST /group/{id}/contests/add` — 推送比赛到指定小组
+- 利用 Repeater 模块对接口进行参数变异测试，验证 `csrf_token` 校验逻辑
+- 确认各接口对 `Cookie`、`Referer`、`X-Requested-With` 等请求头的依赖关系
+
+### 2. 认证链自动化
+
+- 通过 Electron `<webview>` 标签（`partition: "persist:authsession"`）模拟真实浏览器环境，手动完成人机验证
+- 登录后自动从 `session.fromPartition()` 提取全部 Cookie，序列化到本地 `cookies/cookies.json`
+- 从 `/groups/my` 页面 HTML 响应中通过正则 `/<input\s+type=['"]hidden['"]\s+name=['"]csrf_token['"]\s+value=['"]([a-f0-9]{32})['"]\s*\/?>/i` 动态提取 CSRF Token
+- 后续所有 POST 请求自动注入 `Cookie` + `X-Csrf-Token` + `X-Requested-With` 三重认证头
+
+### 3. 批量请求构造与发送
+
+- 基于 Codeforces `problemset.problems` 公开 API 进行随机选题，支持按 Rating 区间（800~3500）筛选，内置 5 分钟缓存避免频繁调用
+- 通过 `/data/mashup` 接口批量将 `contestId/index` 转换为服务端内部 `problemId`（逐题调用 `problemQuery`）
+- 自动调用 `saveMashup` 创建 Mashup 比赛，并通过 `/group/{id}/contests/add` 推送到指定 Gym 小组
+- 单次操作可替代 10+ 步手动流程
+
+### 4. 安全存储
+
+- 账号凭据使用 **AES-256-CBC** 加密存储于本地 `config.yaml`（密钥经 SHA-256 哈希派生）
+- Session Cookie 隔离存储于 Electron `persist:authsession` 分区，不纳入版本控制
+- 应用启用 `contextIsolation`，渲染进程通过 `preload.ts` 受限 IPC 桥接访问主进程能力
+
+---
+
+## 工具链
+
+| 工具 | 角色 |
+|---|---|
+| **Burp Suite Professional** | 流量捕获、请求分析、参数变异、接口探测 |
+| Electron | 桌面运行时容器，WebView 模拟真实浏览器 |
+| TypeScript | 主逻辑开发语言 |
+| Node.js (≥ 18) | 运行时环境，提供 `https` / `crypto` / `fs` 等底层能力 |
+| Yarn (≥ 1.22) | 依赖管理 |
+
+---
+
+## 目录结构
+
+```
+cf_add_training/
+├── src/
+│   ├── main.ts              # Electron 主进程：窗口管理、IPC 调度、CSRF 提取、发布逻辑
+│   ├── fetchGroups.ts       # HTTPS 请求构建与 HTML 解析（JSDOM 提取 group 列表）
+│   ├── publicProblem.ts     # CF API 调用、随机选题、problemQuery、Mashup 创建
+│   └── preload.ts           # contextIsolation 安全桥接层
+├── public/
+│   ├── login.html           # WebView 登录界面
+│   ├── mygroup.html         # 小组选择界面（接收渲染后的 HTML 片段）
+│   └── setProblem.html      # 比赛参数配置界面
+├── package.json
+├── tsconfig.json
+└── yarn.lock
+```
+
+---
+
+## 使用流程
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/xhit-ux/cf_add_training.git
+cd cf_add_training
+
+# 2. 安装依赖
+yarn install
+
+# 3. 启动应用（自动编译 TypeScript 并启动 Electron）
+yarn start
+```
+
+### 操作步骤
+
+1. **登录认证**：应用内置 WebView 打开 Codeforces，手动完成人机验证后点击"保存 Cookie"，程序自动提取 Cookie 序列化 + CSRF Token 提取。
+2. **选择小组**：自动拉取用户所属的 Gym 小组列表，勾选目标小组。
+3. **配置比赛**：设置比赛名称、时长、题目数量及每道题的 Rating 区间（800~3500）。
+4. **一键发布**：工具自动完成 选题 → ID 转换（problemQuery） → Mashup 创建 → 推送小组 的全流程。
+
+---
+
+## 安全测试方法论（蓝队视角）
+
+本项目体现了以下安全测试核心技能：
+
+| 技能维度 | 具体体现 |
+|---|---|
+| **HTTP 流量分析** | 使用 Burp Suite Proxy 拦截 HTTPS 流量，识别认证流程、Session 管理机制 |
+| **CSRF 逆向分析** | 从 HTML 响应中定位隐藏表单字段，理解 Token 绑定与验证逻辑 |
+| **接口安全测试** | 利用 Repeater 进行参数变异、重放攻击模拟，验证服务端校验边界 |
+| **自动化脚本开发** | 将手工分析成果转化为可复用的 TypeScript/Electron 程序 |
+| **加密与安全存储** | 实现 AES-256-CBC 凭据加密、Cookie 隔离存储、contextIsolation 安全加固 |
+| **会话管理** | 自动化 Cookie 持久化、CSRF Token 动态提取与注入 |
+
+---
 
 ## 免责声明
 
-本项目仅供学习与团队内部训练使用。请遵循 Codeforces 的使用条款，不要在未经允许的情况下批量创建/发布比赛；如账号触发风控，请第一时间暂停自动化操作。
+本项目仅用于授权安全测试与团队内部训练，所有接口分析均在合法授权范围内进行。使用本工具需遵守 Codeforces 平台使用条款，禁止用于未授权的自动化操作或任何违反平台规则的行为。
